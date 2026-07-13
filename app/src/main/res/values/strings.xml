@@ -68,8 +68,8 @@
     <string name="updates_retry">Retry</string>
 
     <!-- Forwarder: Stremio-not-installed dialog -->
-    <string name="stremio_missing_title">Stremio isn\'t installed</string>
-    <string name="stremio_missing_body">To open titles you\'ll need the free Stremio app. Install it, then tap the button again.</string>
+    <string name="stremio_missing_title">Stremio isn’t installed</string>
+    <string name="stremio_missing_body">To open titles you’ll need the free Stremio app. Install it, then tap the button again.</string>
     <string name="stremio_missing_get">Get Stremio on Google Play</string>
     <string name="stremio_missing_not_now">Not now</string>
 </resources>
