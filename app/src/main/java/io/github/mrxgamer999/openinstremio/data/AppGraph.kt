@@ -5,6 +5,9 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import io.github.mrxgamer999.openinstremio.BuildConfig
+import io.github.mrxgamer999.openinstremio.data.github.DefaultUpdateRepository
+import io.github.mrxgamer999.openinstremio.data.github.GitHubService
+import io.github.mrxgamer999.openinstremio.data.github.UpdateRepository
 import io.github.mrxgamer999.openinstremio.data.tmdb.TmdbService
 import java.util.concurrent.TimeUnit
 import kotlinx.serialization.json.Json
@@ -57,6 +60,17 @@ object AppGraph {
                         )
                         .also { imdbResolver = it }
             }
+
+    private val gitHubService: GitHubService by lazy {
+        Retrofit.Builder()
+            .baseUrl("https://api.github.com/")
+            .client(okHttpClient)
+            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+            .build()
+            .create(GitHubService::class.java)
+    }
+
+    fun updateRepository(): UpdateRepository = DefaultUpdateRepository(gitHubService)
 
     fun dataStore(context: Context): DataStore<Preferences> = context.applicationContext.dataStore
 

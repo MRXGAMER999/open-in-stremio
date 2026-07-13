@@ -54,6 +54,19 @@
     <string name="about_tmdb_title">Data attribution</string>
     <string name="about_tmdb_attribution">This product uses the TMDB API but is not endorsed or certified by TMDB.</string>
 
+    <!-- Check for updates -->
+    <string name="updates_title">Check for updates</string>
+    <string name="updates_checking">Checking for updates…</string>
+    <string name="updates_up_to_date">You’re up to date</string>
+    <string name="updates_available">Update available</string>
+    <string name="updates_whats_new">What’s new</string>
+    <string name="updates_notes_fallback">See the release notes on GitHub.</string>
+    <string name="updates_download">Download from GitHub</string>
+    <string name="updates_manual_note">You install the file yourself — nothing downloads or updates automatically.</string>
+    <string name="updates_no_releases">No releases published yet.</string>
+    <string name="updates_error">Couldn’t check for updates. Check your connection and try again.</string>
+    <string name="updates_retry">Retry</string>
+
     <!-- Forwarder: Stremio-not-installed dialog -->
     <string name="stremio_missing_title">Stremio isn\'t installed</string>
     <string name="stremio_missing_body">To open titles you\'ll need the free Stremio app. Install it, then tap the button again.</string>
