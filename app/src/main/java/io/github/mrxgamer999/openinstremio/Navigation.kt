@@ -1,4 +1,4 @@
-package com.example.steambridge
+package io.github.mrxgamer999.openinstremio
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
@@ -8,7 +8,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
-import com.example.steambridge.ui.main.MainScreen
+import io.github.mrxgamer999.openinstremio.ui.main.MainScreen
 
 @Composable
 fun MainNavigation() {

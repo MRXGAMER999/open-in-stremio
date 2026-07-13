@@ -22,7 +22,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:windowSoftInputMode="adjustResize"
-        android:theme="@style/Theme.SteamBridge">
+        android:theme="@style/Theme.OpenInStremio">
         <activity
             android:name=".MainActivity"
             android:exported="true">

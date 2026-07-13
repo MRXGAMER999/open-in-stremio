@@ -1,4 +1,4 @@
-package com.example.steambridge.theme
+package io.github.mrxgamer999.openinstremio.theme
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -30,7 +30,7 @@ private val LightColorScheme =
   )
 
 @Composable
-fun SteamBridgeTheme(
+fun OpenInStremioTheme(
   darkTheme: Boolean = isSystemInDarkTheme(),
   // Dynamic color is available on Android 12+
   dynamicColor: Boolean = true,

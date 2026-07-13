@@ -1,4 +1,4 @@
-package com.example.steambridge.theme
+package io.github.mrxgamer999.openinstremio.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle

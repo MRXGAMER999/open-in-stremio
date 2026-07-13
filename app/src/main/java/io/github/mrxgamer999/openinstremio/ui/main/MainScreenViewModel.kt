@@ -1,9 +1,9 @@
-package com.example.steambridge.ui.main
+package io.github.mrxgamer999.openinstremio.ui.main
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.steambridge.data.DataRepository
-import com.example.steambridge.ui.main.MainScreenUiState.Success
+import io.github.mrxgamer999.openinstremio.data.DataRepository
+import io.github.mrxgamer999.openinstremio.ui.main.MainScreenUiState.Success
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch

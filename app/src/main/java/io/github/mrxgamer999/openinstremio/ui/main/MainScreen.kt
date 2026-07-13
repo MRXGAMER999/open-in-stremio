@@ -1,4 +1,4 @@
-package com.example.steambridge.ui.main
+package io.github.mrxgamer999.openinstremio.ui.main
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.Text
@@ -9,8 +9,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.NavKey
-import com.example.steambridge.data.DefaultDataRepository
-import com.example.steambridge.theme.SteamBridgeTheme
+import io.github.mrxgamer999.openinstremio.data.DefaultDataRepository
+import io.github.mrxgamer999.openinstremio.theme.OpenInStremioTheme
 
 @Composable
 fun MainScreen(
@@ -45,11 +45,11 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 @Preview(showBackground = true)
 @Composable
 fun MainScreenPreview() {
-  SteamBridgeTheme { MainScreen(listOf("Android")) }
+  OpenInStremioTheme { MainScreen(listOf("Android")) }
 }
 
 @Preview(showBackground = true, widthDp = 340)
 @Composable
 fun MainScreenPortraitPreview() {
-  SteamBridgeTheme { MainScreen(listOf("Android")) }
+  OpenInStremioTheme { MainScreen(listOf("Android")) }
 }

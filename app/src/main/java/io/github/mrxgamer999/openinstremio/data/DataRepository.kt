@@ -1,4 +1,4 @@
-package com.example.steambridge.data
+package io.github.mrxgamer999.openinstremio.data
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow

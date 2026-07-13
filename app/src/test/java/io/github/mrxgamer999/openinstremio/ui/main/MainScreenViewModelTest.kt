@@ -1,6 +1,6 @@
-package com.example.steambridge.ui.main
+package io.github.mrxgamer999.openinstremio.ui.main
 
-import com.example.steambridge.data.DataRepository
+import io.github.mrxgamer999.openinstremio.data.DataRepository
 import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first

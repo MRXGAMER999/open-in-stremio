@@ -1,4 +1,4 @@
-package com.example.steambridge
+package io.github.mrxgamer999.openinstremio
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import com.example.steambridge.theme.SteamBridgeTheme
+import io.github.mrxgamer999.openinstremio.theme.OpenInStremioTheme
 
 class MainActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
@@ -16,7 +16,7 @@ class MainActivity : ComponentActivity() {
 
     enableEdgeToEdge()
     setContent {
-      SteamBridgeTheme { Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) { MainNavigation() } }
+      OpenInStremioTheme { Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) { MainNavigation() } }
     }
   }
 }

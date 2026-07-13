@@ -5,14 +5,14 @@ plugins {
 }
 
 android {
-    namespace = "com.example.steambridge"
+    namespace = "io.github.mrxgamer999.openinstremio"
     compileSdk = 36
     defaultConfig {
-        applicationId = "com.example.steambridge"
+        applicationId = "io.github.mrxgamer999.openinstremio"
         minSdk = 30
         targetSdk = 36
         versionCode = 1
-        versionName = "1.0"
+        versionName = "1.0.0"
     }
 
     buildTypes {

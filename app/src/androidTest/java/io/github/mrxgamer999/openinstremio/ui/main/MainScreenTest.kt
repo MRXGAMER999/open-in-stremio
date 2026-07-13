@@ -1,4 +1,4 @@
-package com.example.steambridge.ui.main
+package io.github.mrxgamer999.openinstremio.ui.main
 
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -7,7 +7,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 
-/** UI tests for [com.example.steambridge.ui.main.MainScreen]. */
+/** UI tests for [io.github.mrxgamer999.openinstremio.ui.main.MainScreen]. */
 class MainScreenTest {
 
   @get:Rule val composeTestRule = createAndroidComposeRule<ComponentActivity>()
