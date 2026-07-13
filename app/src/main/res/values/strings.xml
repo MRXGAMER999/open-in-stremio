@@ -24,6 +24,36 @@
     <string name="home_status_sg_missing_title">SeriesGuide not installed</string>
     <string name="home_status_sg_missing_body">This add-on needs the SeriesGuide app. Tap to get it on Google Play.</string>
 
+    <!-- Setup guide -->
+    <string name="back">Back</string>
+    <string name="setup_title">Setup guide</string>
+    <string name="setup_next">Next</string>
+    <string name="setup_finish">Finish setup</string>
+    <string name="setup_1_title">What this does</string>
+    <string name="setup_1_body">This add-on puts an “Open in Stremio” button on your movies and episodes in SeriesGuide. Tap it, and Stremio opens on that exact title.</string>
+    <string name="setup_2_title">Turn it on in SeriesGuide</string>
+    <string name="setup_2_body">The button only appears after you switch the extension on inside SeriesGuide. Open Extensions and enable “Open in Stremio”.</string>
+    <string name="setup_3_title">Make sure Stremio is installed</string>
+    <string name="setup_3_body">The button opens the Stremio app, so it needs to be installed. If it isn’t on your device yet, grab it first — it’s free.</string>
+    <string name="setup_4_title">You’re all set</string>
+    <string name="setup_4_body">That’s it. Open any movie or episode in SeriesGuide and look for “Open in Stremio”.</string>
+    <string name="setup_open_sg_extensions">Open SeriesGuide → Extensions</string>
+    <string name="setup_get_stremio">Get Stremio on Google Play</string>
+    <string name="setup_sg_missing_snackbar">SeriesGuide isn’t installed on this device.</string>
+
+    <!-- About -->
+    <string name="about_title">About</string>
+    <string name="about_version">Version %1$s</string>
+    <string name="about_license">License</string>
+    <string name="about_license_value">MIT · free and open source</string>
+    <string name="about_repo">GitHub repository</string>
+    <string name="about_repo_value">View source &amp; report issues</string>
+    <string name="about_developer">Developer</string>
+    <string name="about_developer_value">Built for the SeriesGuide community</string>
+    <string name="about_tmdb_chip">TMDB</string>
+    <string name="about_tmdb_title">Data attribution</string>
+    <string name="about_tmdb_attribution">This product uses the TMDB API but is not endorsed or certified by TMDB.</string>
+
     <!-- Forwarder: Stremio-not-installed dialog -->
     <string name="stremio_missing_title">Stremio isn\'t installed</string>
     <string name="stremio_missing_body">To open titles you\'ll need the free Stremio app. Install it, then tap the button again.</string>
