@@ -12,6 +12,24 @@
         android:name="android.hardware.touchscreen"
         android:required="false" />
 
+    <!-- TMDb fallback lookups + GitHub release check -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- JobIntentService compatibility path on API 23-25 -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <!-- Android 11+ package visibility for the apps we detect and launch. The intent
+         entry keeps stremio:// links resolvable even if Stremio ever changes its
+         application id. -->
+    <queries>
+        <package android:name="com.battlelancer.seriesguide" />
+        <package android:name="com.uwetrottmann.seriesguide.amzn" />
+        <package android:name="com.stremio.one" />
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="stremio" />
+        </intent>
+    </queries>
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -27,6 +45,17 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Trampoline for the SeriesGuide action's view intent. Exported so SeriesGuide
+             can start it, but with no intent filter it is only reachable by explicit
+             component. Task hygiene keeps it out of Recents and off SeriesGuide's task. -->
+        <activity
+            android:name=".forwarder.StremioLaunchActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.OpenInStremio.Forwarder" />
     </application>
 
 </manifest>
