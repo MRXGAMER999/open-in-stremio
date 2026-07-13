@@ -31,10 +31,24 @@ android {
         )
     }
 
+    // Release signing is configured via the git-ignored local.properties (see
+    // local.properties.example). Without those properties the release build still
+    // assembles, just unsigned - so contributors can build without the keystore.
+    val releaseStoreFile = localProperties.getProperty("RELEASE_STORE_FILE")
+    if (releaseStoreFile != null) {
+        signingConfigs.create("release") {
+            storeFile = file(releaseStoreFile)
+            storePassword = localProperties.getProperty("RELEASE_STORE_PASSWORD")
+            keyAlias = localProperties.getProperty("RELEASE_KEY_ALIAS")
+            keyPassword = localProperties.getProperty("RELEASE_KEY_PASSWORD")
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfig = signingConfigs.findByName("release")
         }
     }
     compileOptions {

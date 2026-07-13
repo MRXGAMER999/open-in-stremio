@@ -8,3 +8,11 @@
 # provide one. Leaving it blank still builds and works - those titles then get a
 # "Search in Stremio" button instead of a direct link.
 TMDB_API_KEY=
+
+# Release signing (optional - only needed to produce signed release builds).
+# Leave these out entirely to build an unsigned release APK. Use forward slashes
+# in the path.
+#RELEASE_STORE_FILE=C:/path/to/your.keystore
+#RELEASE_STORE_PASSWORD=
+#RELEASE_KEY_ALIAS=
+#RELEASE_KEY_PASSWORD=
