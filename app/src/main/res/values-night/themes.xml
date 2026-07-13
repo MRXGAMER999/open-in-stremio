@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Dark parent avoids a white window flash before Compose draws in dark mode. -->
+    <style name="Theme.OpenInStremio" parent="android:Theme.Material.NoActionBar" />
+</resources>

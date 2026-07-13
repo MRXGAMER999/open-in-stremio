@@ -2,4 +2,14 @@
 <resources>
 
     <style name="Theme.OpenInStremio" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <!-- Translucent window for the forwarder activity: either it launches Stremio and
+         finishes without drawing anything, or it composes a single Material 3 dialog
+         over whatever app the user tapped the action in. -->
+    <style name="Theme.OpenInStremio.Forwarder">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:backgroundDimEnabled">false</item>
+    </style>
 </resources>
