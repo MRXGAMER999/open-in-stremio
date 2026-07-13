@@ -9,6 +9,21 @@
     <string name="action_open_in_stremio">Open in Stremio</string>
     <string name="action_search_in_stremio">Search in Stremio</string>
 
+    <!-- Home screen -->
+    <string name="home_subtitle">SeriesGuide → Stremio</string>
+    <string name="home_flow_seriesguide">SeriesGuide</string>
+    <string name="home_flow_stremio">Stremio</string>
+    <string name="home_menu_setup">Setup guide</string>
+    <string name="home_menu_about">About</string>
+    <string name="home_menu_updates">Check for updates</string>
+    <string name="home_footer">v%1$s · MIT · open source</string>
+    <string name="home_status_active_title">Extension enabled</string>
+    <string name="home_status_active_body">Active inside SeriesGuide</string>
+    <string name="home_status_not_enabled_title">Not enabled yet</string>
+    <string name="home_status_not_enabled_body">Tap to open SeriesGuide → Extensions and switch it on</string>
+    <string name="home_status_sg_missing_title">SeriesGuide not installed</string>
+    <string name="home_status_sg_missing_body">This add-on needs the SeriesGuide app. Tap to get it on Google Play.</string>
+
     <!-- Forwarder: Stremio-not-installed dialog -->
     <string name="stremio_missing_title">Stremio isn\'t installed</string>
     <string name="stremio_missing_body">To open titles you\'ll need the free Stremio app. Install it, then tap the button again.</string>

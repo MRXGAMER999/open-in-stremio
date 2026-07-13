@@ -59,4 +59,10 @@ object AppGraph {
             }
 
     fun dataStore(context: Context): DataStore<Preferences> = context.applicationContext.dataStore
+
+    fun extensionStatusRepository(context: Context): ExtensionStatusRepository =
+        ExtensionStatusRepository(
+            packageChecker = AndroidPackageChecker(context.applicationContext),
+            extensionActive = ExtensionStateStore(dataStore(context)).active,
+        )
 }
