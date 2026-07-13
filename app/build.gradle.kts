@@ -1,18 +1,34 @@
+import java.util.Properties
+
 plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.compose.compiler)
   alias(libs.plugins.kotlin.serialization)
 }
 
+// TMDb API key is supplied via the git-ignored local.properties (see local.properties.example).
+// A blank key is fine: the extension then skips the TMDb fallback and publishes a
+// "Search in Stremio" action for titles without an IMDb id.
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+}
+
 android {
     namespace = "io.github.mrxgamer999.openinstremio"
-    compileSdk = 36
+    compileSdk = 37
     defaultConfig {
         applicationId = "io.github.mrxgamer999.openinstremio"
-        minSdk = 30
+        minSdk = 23
         targetSdk = 36
         versionCode = 1
         versionName = "1.0.0"
+
+        buildConfigField(
+            "String",
+            "TMDB_API_KEY",
+            "\"${localProperties.getProperty("TMDB_API_KEY").orEmpty()}\"",
+        )
     }
 
     buildTypes {
@@ -28,7 +44,7 @@ android {
     buildFeatures {
       compose = true
       aidl = false
-      buildConfig = false
+      buildConfig = true
       shaders = false
     }
 
@@ -61,13 +77,25 @@ dependencies {
   implementation(libs.androidx.compose.ui)
   implementation(libs.androidx.compose.ui.tooling.preview)
   implementation(libs.androidx.compose.material3)
-  // Compose for TV (Leanback-style Material components for the 10-foot UI)
-  implementation(libs.androidx.tv.material)
+  implementation(libs.androidx.compose.material.icons.extended)
   // Tooling
   debugImplementation(libs.androidx.compose.ui.tooling)
   // Instrumented tests
   androidTestImplementation(libs.androidx.compose.ui.test.junit4)
   debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+  // SeriesGuide extension API
+  implementation(libs.seriesguide.api)
+
+  // Networking (TMDb fallback lookups + GitHub release check)
+  implementation(libs.retrofit)
+  implementation(libs.retrofit.converter.kotlinx.serialization)
+  implementation(libs.okhttp)
+  implementation(libs.kotlinx.serialization.json)
+  implementation(libs.kotlinx.coroutines.android)
+
+  // Persistent tmdbId -> imdbId cache + extension state
+  implementation(libs.androidx.datastore.preferences)
 
   // Local tests: jUnit, coroutines, Android runner
   testImplementation(libs.junit)

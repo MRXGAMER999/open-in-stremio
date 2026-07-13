@@ -1,0 +1,10 @@
+# Copy this file to local.properties (which is git-ignored) and fill in the values.
+
+# Path to your Android SDK (Android Studio usually manages this line for you).
+#sdk.dir=C\:\\Users\\you\\AppData\\Local\\Android\\Sdk
+
+# TMDb API key (v3 auth). Get one for free at https://www.themoviedb.org/settings/api
+# Used only as a fallback to look up IMDb ids for titles where SeriesGuide does not
+# provide one. Leaving it blank still builds and works - those titles then get a
+# "Search in Stremio" button instead of a direct link.
+TMDB_API_KEY=
