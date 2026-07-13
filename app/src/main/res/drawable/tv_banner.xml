@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Placeholder Android TV home-screen banner.
+  Spec: 320 x 180 px, xhdpi. Google recommends including the app name/logo as
+  raster text. Replace this vector with a designed 320x180 PNG before publishing
+  (see developer.android.com/design/ui/tv/guides/system/tv-app-icon-guidelines).
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="320dp"
+    android:height="180dp"
+    android:viewportWidth="320"
+    android:viewportHeight="180">
+    <!-- Background -->
+    <path
+        android:fillColor="#0F1B2D"
+        android:pathData="M0,0 h320 v180 h-320 z" />
+    <!-- Accent bar -->
+    <path
+        android:fillColor="#4FC3F7"
+        android:pathData="M0,168 h320 v12 h-320 z" />
+    <!-- Stylized bridge/steam mark -->
+    <path
+        android:fillColor="#4FC3F7"
+        android:pathData="M96,110 q64,-56 128,0 l0,10 q-64,-46 -128,0 z" />
+    <path
+        android:fillColor="#82CFF6"
+        android:pathData="M120,86 q40,-34 80,0 l0,10 q-40,-26 -80,0 z" />
+</vector>
