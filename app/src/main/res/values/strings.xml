@@ -1,6 +1,14 @@
 <resources>
     <string name="app_name">Open in Stremio</string>
 
+    <!-- Extension as it appears in SeriesGuide's extension list -->
+    <string name="extension_name">Open in Stremio</string>
+    <string name="extension_description">Adds an Open in Stremio button to episodes and movies.</string>
+
+    <!-- Action button titles shown under episodes/movies inside SeriesGuide -->
+    <string name="action_open_in_stremio">Open in Stremio</string>
+    <string name="action_search_in_stremio">Search in Stremio</string>
+
     <!-- Forwarder: Stremio-not-installed dialog -->
     <string name="stremio_missing_title">Stremio isn\'t installed</string>
     <string name="stremio_missing_body">To open titles you\'ll need the free Stremio app. Install it, then tap the button again.</string>

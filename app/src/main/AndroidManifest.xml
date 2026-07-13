@@ -56,6 +56,33 @@
             android:noHistory="true"
             android:taskAffinity=""
             android:theme="@style/Theme.OpenInStremio.Forwarder" />
+
+        <!-- SeriesGuide discovers extensions through this receiver. The SUBSCRIBE and
+             UPDATE actions are required for Android 15 (SDK 35) safer intents; without
+             them the receiver stops getting subscribe/update broadcasts. -->
+        <receiver
+            android:name=".extension.OpenInStremioExtensionReceiver"
+            android:description="@string/extension_description"
+            android:exported="true"
+            android:label="@string/extension_name">
+            <intent-filter>
+                <action android:name="com.battlelancer.seriesguide.api.SeriesGuideExtension" />
+                <action android:name="com.battlelancer.seriesguide.api.action.SUBSCRIBE" />
+                <action android:name="com.battlelancer.seriesguide.api.action.UPDATE" />
+            </intent-filter>
+            <!-- Lets SeriesGuide's Extensions screen open this app's own UI (the only way
+                 to reach it on Android TV, where the app has no launcher icon). -->
+            <meta-data
+                android:name="settingsActivity"
+                android:value="io.github.mrxgamer999.openinstremio/.MainActivity" />
+        </receiver>
+
+        <!-- Worker service behind the receiver; SeriesGuideExtension is a JobIntentService,
+             so the system binds it with the job-service permission. -->
+        <service
+            android:name=".extension.OpenInStremioExtension"
+            android:exported="false"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
     </application>
 
 </manifest>
