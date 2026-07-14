@@ -71,10 +71,12 @@
                 <action android:name="com.battlelancer.seriesguide.api.action.UPDATE" />
             </intent-filter>
             <!-- Lets SeriesGuide's Extensions screen open this app's own UI (the only way
-                 to reach it on Android TV, where the app has no launcher icon). -->
+                 to reach it on Android TV, where the app has no launcher icon). SeriesGuide
+                 prepends "<package>/" itself before unflattening, so this must be the bare
+                 class name - a package-prefixed value breaks with ActivityNotFoundException. -->
             <meta-data
                 android:name="settingsActivity"
-                android:value="io.github.mrxgamer999.openinstremio/.MainActivity" />
+                android:value=".MainActivity" />
         </receiver>
 
         <!-- Worker service behind the receiver; SeriesGuideExtension is a JobIntentService,
