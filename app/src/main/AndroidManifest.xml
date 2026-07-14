@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!-- The extension works on Android TV (NVIDIA Shield) but is deliberately
          launcher-less there: it is enabled entirely inside SeriesGuide, so there is
@@ -30,13 +31,19 @@
         </intent>
     </queries>
 
+    <!-- Backup stays on for the IMDb-id cache, but the SeriesGuide pairing token is
+         excluded: a restored stale token makes SeriesGuide silently ignore every
+         action this extension publishes. -->
     <application
         android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.OpenInStremio">
+        android:theme="@style/Theme.OpenInStremio"
+        tools:targetApi="s">
         <activity
             android:name=".MainActivity"
             android:exported="true">
