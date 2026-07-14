@@ -1,6 +1,7 @@
 package io.github.mrxgamer999.openinstremio.extension
 
 import android.content.Intent
+import android.util.Log
 import com.battlelancer.seriesguide.api.Action
 import com.battlelancer.seriesguide.api.Episode
 import com.battlelancer.seriesguide.api.Movie
@@ -15,10 +16,12 @@ import kotlinx.coroutines.runBlocking
 /**
  * Publishes the "Open in Stremio" action for every movie and episode SeriesGuide shows.
  *
- * IMDb-id precedence: the id SeriesGuide already provides, then the local cache, then a
- * TMDb external-ids lookup (bounded by tight OkHttp timeouts; this runs on the
- * JobIntentService worker thread, never the main thread). When no id can be resolved the
- * published action becomes "Search in Stremio" so the button never leads nowhere.
+ * Publish-first strategy: when the IMDb id is already known (SeriesGuide provided it, or
+ * the local cache has it) a single "open" action is published immediately. Otherwise a
+ * "Search in Stremio" fallback is published right away — the button must never depend on
+ * the network — and a TMDb lookup then tries to upgrade it to a direct "open" action.
+ * publishAction may be called multiple times per request; SeriesGuide replaces the shown
+ * action each time.
  */
 class OpenInStremioExtension : SeriesGuideExtension(NAME) {
 
@@ -33,56 +36,59 @@ class OpenInStremioExtension : SeriesGuideExtension(NAME) {
     override fun onRequest(episodeIdentifier: Int, episode: Episode) {
         setActive(true)
         val title = episode.showTitle?.takeUnless { it.isBlank() } ?: episode.title.orEmpty()
-        publishSafely(episodeIdentifier, title) {
-            val showImdbId =
-                episode.showImdbId?.takeUnless { it.isBlank() }
-                    ?: runBlocking { AppGraph.imdbResolver(applicationContext).resolveShow(episode.showTmdbId) }
-            val season = episode.season
-            val number = episode.number
-            if (showImdbId != null && season != null && number != null) {
-                openAction(
-                    identifier = episodeIdentifier,
-                    type = LaunchRequest.TYPE_SERIES,
-                    imdbId = showImdbId,
-                    title = title,
-                    season = season,
-                    episode = number,
-                )
-            } else {
-                searchAction(episodeIdentifier, title)
-            }
+        val season = episode.season
+        val number = episode.number
+        val resolver = AppGraph.imdbResolver(applicationContext)
+
+        val knownImdbId =
+            episode.showImdbId?.takeUnless { it.isBlank() }
+                ?: runCatching { runBlocking { resolver.cachedShow(episode.showTmdbId) } }.getOrNull()
+        if (knownImdbId != null && season != null && number != null) {
+            Log.i(TAG, "episode $episodeIdentifier: publishing open (id known)")
+            publishAction(
+                openAction(episodeIdentifier, LaunchRequest.TYPE_SERIES, knownImdbId, title, season, number)
+            )
+            return
+        }
+
+        Log.i(TAG, "episode $episodeIdentifier: publishing search fallback")
+        publishAction(searchAction(episodeIdentifier, title))
+
+        // Without a season/episode number a direct link is impossible; skip the lookup.
+        if (season == null || number == null) return
+        val resolvedImdbId =
+            runCatching { runBlocking { resolver.resolveShow(episode.showTmdbId) } }.getOrNull()
+        if (resolvedImdbId != null) {
+            Log.i(TAG, "episode $episodeIdentifier: upgrading to open (id resolved)")
+            publishAction(
+                openAction(episodeIdentifier, LaunchRequest.TYPE_SERIES, resolvedImdbId, title, season, number)
+            )
         }
     }
 
     override fun onRequest(movieIdentifier: Int, movie: Movie) {
         setActive(true)
         val title = movie.title.orEmpty()
-        publishSafely(movieIdentifier, title) {
-            val imdbId =
-                movie.imdbId?.takeUnless { it.isBlank() }
-                    ?: runBlocking { AppGraph.imdbResolver(applicationContext).resolveMovie(movie.tmdbId) }
-            if (imdbId != null) {
-                openAction(
-                    identifier = movieIdentifier,
-                    type = LaunchRequest.TYPE_MOVIE,
-                    imdbId = imdbId,
-                    title = title,
-                )
-            } else {
-                searchAction(movieIdentifier, title)
-            }
-        }
-    }
+        val resolver = AppGraph.imdbResolver(applicationContext)
 
-    /** Always publish something; a failed lookup must never leave a stale or missing action. */
-    private fun publishSafely(identifier: Int, title: String, buildAction: () -> Action) {
-        val action =
-            try {
-                buildAction()
-            } catch (e: Exception) {
-                searchAction(identifier, title)
-            }
-        publishAction(action)
+        val knownImdbId =
+            movie.imdbId?.takeUnless { it.isBlank() }
+                ?: runCatching { runBlocking { resolver.cachedMovie(movie.tmdbId) } }.getOrNull()
+        if (knownImdbId != null) {
+            Log.i(TAG, "movie $movieIdentifier: publishing open (id known)")
+            publishAction(openAction(movieIdentifier, LaunchRequest.TYPE_MOVIE, knownImdbId, title))
+            return
+        }
+
+        Log.i(TAG, "movie $movieIdentifier: publishing search fallback")
+        publishAction(searchAction(movieIdentifier, title))
+
+        val resolvedImdbId =
+            runCatching { runBlocking { resolver.resolveMovie(movie.tmdbId) } }.getOrNull()
+        if (resolvedImdbId != null) {
+            Log.i(TAG, "movie $movieIdentifier: upgrading to open (id resolved)")
+            publishAction(openAction(movieIdentifier, LaunchRequest.TYPE_MOVIE, resolvedImdbId, title))
+        }
     }
 
     private fun openAction(
@@ -112,11 +118,17 @@ class OpenInStremioExtension : SeriesGuideExtension(NAME) {
             .putExtra(StremioLaunchActivity.EXTRA_TYPE, type)
             .putExtra(StremioLaunchActivity.EXTRA_TITLE, title)
 
+    /** Best-effort: a failed flag write must never abort publishing or crash the job. */
     private fun setActive(active: Boolean) {
-        runBlocking { ExtensionStateStore(AppGraph.dataStore(applicationContext)).setActive(active) }
+        runCatching {
+                runBlocking { ExtensionStateStore(AppGraph.dataStore(applicationContext)).setActive(active) }
+            }
+            .onFailure { Log.w(TAG, "Failed to persist extension-active flag", it) }
     }
 
     companion object {
+        private const val TAG = "OpenInStremioExt"
+
         // Keys the extension's SharedPreferences store; keep stable across versions.
         const val NAME = "OpenInStremioExtension"
     }
