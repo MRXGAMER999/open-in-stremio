@@ -16,7 +16,7 @@ import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 
-// Single process-wide DataStore, shared by the UI and the extension service.
+// Single process-wide DataStore, shared by the UI and the extension receiver.
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore("open_in_stremio")
 
 /**
@@ -28,8 +28,8 @@ object AppGraph {
 
     private val json = Json { ignoreUnknownKeys = true }
 
-    // Tight timeouts: the TMDb fallback runs on the extension's worker thread while a user
-    // is looking at a SeriesGuide screen, so failing fast beats waiting.
+    // Baseline for user-initiated calls, i.e. the update check: a tap deserves a longer leash
+    // than a background lookup.
     private val okHttpClient: OkHttpClient by lazy {
         OkHttpClient.Builder()
             .connectTimeout(3, TimeUnit.SECONDS)
@@ -38,10 +38,22 @@ object AppGraph {
             .build()
     }
 
+    // Tighter deadlines for the TMDb fallback: it runs detached, after the extension broadcast has
+    // already been answered, and is only worth anything while SeriesGuide still remembers the
+    // title — so failing fast beats waiting. Derived, so it shares the connection pool.
+    private val tmdbHttpClient: OkHttpClient by lazy {
+        okHttpClient
+            .newBuilder()
+            .connectTimeout(2, TimeUnit.SECONDS)
+            .readTimeout(2, TimeUnit.SECONDS)
+            .callTimeout(4, TimeUnit.SECONDS)
+            .build()
+    }
+
     private val tmdbService: TmdbService by lazy {
         Retrofit.Builder()
             .baseUrl("https://api.themoviedb.org/3/")
-            .client(okHttpClient)
+            .client(tmdbHttpClient)
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
             .create(TmdbService::class.java)

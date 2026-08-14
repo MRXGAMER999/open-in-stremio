@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?><!--
-   Applies to API 23-30 (android:fullBackupContent). The seriesguide-api base class
-   stores the SeriesGuide subscriber pairing (component|token) in this prefs file.
+   Applies to API 23-30 (android:fullBackupContent). ExtensionSubscriptions stores the
+   SeriesGuide subscriber pairing (component|token) in this prefs file, whose name is
+   inherited from the seriesguide-api base class this extension used to build on.
    Restoring a stale token after reinstall/transfer makes SeriesGuide silently drop
    every published action; an absent file is repopulated by SeriesGuide's next
    SUBSCRIBE broadcast, so it must never be backed up.

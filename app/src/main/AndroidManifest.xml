@@ -15,8 +15,12 @@
 
     <!-- TMDb fallback lookups + GitHub release check -->
     <uses-permission android:name="android.permission.INTERNET" />
-    <!-- JobIntentService compatibility path on API 23-25 -->
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- The seriesguide-api AAR declares WAKE_LOCK for the JobIntentService it ships. Nothing
+         here runs a service any more, but the dependency stays for Action/Episode/Movie, so the
+         permission has to be removed from the merged manifest explicitly. -->
+    <uses-permission
+        android:name="android.permission.WAKE_LOCK"
+        tools:node="remove" />
 
     <!-- Android 11+ package visibility for the apps we detect and launch. The intent
          entry keeps stremio:// links resolvable even if Stremio ever changes its
@@ -64,9 +68,11 @@
             android:taskAffinity=""
             android:theme="@style/Theme.OpenInStremio.Forwarder" />
 
-        <!-- SeriesGuide discovers extensions through this receiver. The SUBSCRIBE and
-             UPDATE actions are required for Android 15 (SDK 35) safer intents; without
-             them the receiver stops getting subscribe/update broadcasts. -->
+        <!-- SeriesGuide discovers extensions through this receiver, which also publishes the
+             action: it is the whole extension, because the JobScheduler-backed service this
+             used to defer to often ran after SeriesGuide had already dropped the request. The
+             SUBSCRIBE and UPDATE actions are required for Android 15 (SDK 35) safer intents;
+             without them the receiver stops getting subscribe/update broadcasts. -->
         <receiver
             android:name=".extension.OpenInStremioExtensionReceiver"
             android:description="@string/extension_description"
@@ -85,13 +91,6 @@
                 android:name="settingsActivity"
                 android:value=".MainActivity" />
         </receiver>
-
-        <!-- Worker service behind the receiver; SeriesGuideExtension is a JobIntentService,
-             so the system binds it with the job-service permission. -->
-        <service
-            android:name=".extension.OpenInStremioExtension"
-            android:exported="false"
-            android:permission="android.permission.BIND_JOB_SERVICE" />
     </application>
 
 </manifest>

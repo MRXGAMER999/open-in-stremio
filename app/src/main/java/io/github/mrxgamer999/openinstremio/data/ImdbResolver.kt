@@ -1,6 +1,7 @@
 package io.github.mrxgamer999.openinstremio.data
 
 import io.github.mrxgamer999.openinstremio.data.tmdb.TmdbService
+import kotlinx.coroutines.CancellationException
 import retrofit2.HttpException
 
 /**
@@ -64,6 +65,11 @@ class DefaultImdbResolver(
                 // 404 is authoritative (no such entity); other HTTP errors may be transient.
                 if (e.code() == 404) cache.putNegative(kind, tmdbId, now())
                 null
+            } catch (e: CancellationException) {
+                // Cancellation is not a failed lookup, and it extends Exception: swallowing it
+                // would let a timed-out caller run on to the next suspension point and record
+                // "TMDb had no id" for what was really "we gave up".
+                throw e
             } catch (e: Exception) {
                 null
             }

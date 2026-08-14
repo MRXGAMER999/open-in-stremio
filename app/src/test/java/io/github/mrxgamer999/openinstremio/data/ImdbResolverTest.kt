@@ -4,9 +4,14 @@ import io.github.mrxgamer999.openinstremio.data.tmdb.ExternalIdsDto
 import io.github.mrxgamer999.openinstremio.data.tmdb.TmdbService
 import java.io.IOException
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -193,6 +198,35 @@ class ImdbResolverTest {
         assertEquals(0, cache.negatives.size)
         assertNull(resolver.resolveMovie(238))
         assertEquals(2, tmdb.movieCalls)
+    }
+
+    @Test
+    fun cancellationDuringFetch_propagates_insteadOfBeingReportedAsNoResult() = runTest {
+        val fetchStarted = CompletableDeferred<Unit>()
+        val tmdb =
+            object : TmdbService {
+                override suspend fun movieExternalIds(tmdbId: Int, apiKey: String): ExternalIdsDto {
+                    fetchStarted.complete(Unit)
+                    awaitCancellation()
+                }
+
+                override suspend fun tvExternalIds(tmdbId: Int, apiKey: String) =
+                    throw UnsupportedOperationException()
+            }
+        val cache = InMemoryCache()
+        val resolver = resolver(tmdb, cache)
+        var returnedNormally = false
+
+        val lookup = launch {
+            resolver.resolveMovie(238)
+            returnedNormally = true
+        }
+        fetchStarted.await()
+        lookup.cancelAndJoin()
+
+        // A caller that gave up must not be told TMDb had no id — least of all have that recorded.
+        assertFalse("resolve swallowed the cancellation and returned", returnedNormally)
+        assertTrue(cache.negatives.isEmpty())
     }
 
     @Test
