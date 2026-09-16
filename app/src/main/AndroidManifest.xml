@@ -22,16 +22,21 @@
         android:name="android.permission.WAKE_LOCK"
         tools:node="remove" />
 
-    <!-- Android 11+ package visibility for the apps we detect and launch. The intent
-         entry keeps stremio:// links resolvable even if Stremio ever changes its
-         application id. -->
+    <!-- Android 11+ package visibility for the apps we detect and launch. Without these the
+         install checks answer "missing" for an app that is right there. The intent entries keep
+         the links resolvable even if a player ever changes its application id. -->
     <queries>
         <package android:name="com.battlelancer.seriesguide" />
         <package android:name="com.uwetrottmann.seriesguide.amzn" />
         <package android:name="com.stremio.one" />
+        <package android:name="com.fireguy.ondemand" />
         <intent>
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="stremio" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="fireguy" />
         </intent>
     </queries>
 

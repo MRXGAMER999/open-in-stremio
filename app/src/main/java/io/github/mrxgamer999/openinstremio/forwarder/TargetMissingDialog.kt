@@ -4,8 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -24,13 +22,17 @@ import androidx.compose.ui.unit.dp
 import io.github.mrxgamer999.openinstremio.R
 
 /**
- * The "Stremio isn't installed" dialog from the design. Shown by the forwarder when the
- * user taps an action but Stremio is missing. The confirm button requests initial focus
- * so a D-pad (NVIDIA Shield remote) lands on the primary action immediately.
+ * The "app isn't installed" dialog from the design, shown by the forwarder when the user picks a
+ * target that is missing. Whichever button is the primary one requests initial focus so a D-pad
+ * (NVIDIA Shield remote) lands on it immediately.
+ *
+ * Only Stremio has a store page to send anyone to; Fireguy is sideloaded, so its dialog says what
+ * is wrong and stops there rather than offering a route that would dead-end.
  */
 @Composable
-fun StremioMissingDialog(onGetStremio: () -> Unit, onDismiss: () -> Unit) {
+fun TargetMissingDialog(target: Target, onGetTarget: () -> Unit, onDismiss: () -> Unit) {
     val focusRequester = remember { FocusRequester() }
+    val storeAction = target.storeActionRes
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -42,21 +44,28 @@ fun StremioMissingDialog(onGetStremio: () -> Unit, onDismiss: () -> Unit) {
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    imageVector = Icons.Filled.PlayArrow,
+                    imageVector = target.icon,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
                 )
             }
         },
-        title = { Text(stringResource(R.string.stremio_missing_title)) },
-        text = { Text(stringResource(R.string.stremio_missing_body)) },
+        title = { Text(stringResource(target.missingTitleRes)) },
+        text = { Text(stringResource(target.missingBodyRes)) },
         confirmButton = {
-            Button(onClick = onGetStremio, modifier = Modifier.focusRequester(focusRequester)) {
-                Text(stringResource(R.string.stremio_missing_get))
+            // With no store to open, dismissing is the only thing left to do, so it becomes the
+            // primary button rather than a lone quiet option beside nothing.
+            Button(
+                onClick = if (storeAction != null) onGetTarget else onDismiss,
+                modifier = Modifier.focusRequester(focusRequester),
+            ) {
+                Text(stringResource(storeAction ?: R.string.missing_not_now))
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.stremio_missing_not_now)) }
+            if (storeAction != null) {
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.missing_not_now)) }
+            }
         },
     )
 

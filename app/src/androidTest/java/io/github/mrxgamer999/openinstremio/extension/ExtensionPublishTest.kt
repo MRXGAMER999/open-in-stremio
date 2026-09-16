@@ -21,6 +21,11 @@ import org.junit.Test
  * dropped the request, which is why it showed up only sometimes. Every wait here has a deadline
  * far shorter than a deferred job could meet, so a return to the old behaviour fails it.
  */
+/**
+ * The titles asserted here are the ones SeriesGuide shows when Stremio is the only player on the
+ * device - which is what a test device is. With Fireguy installed too they would read "Open in…"
+ * and "Search in…", and the tap would open the chooser instead.
+ */
 class ExtensionPublishTest {
 
     private val harness = ExtensionHarness()
@@ -83,14 +88,16 @@ class ExtensionPublishTest {
 
         val published = harness.awaitPublished(UNKNOWN_ID, FAST_PUBLISH_TIMEOUT_MS)
         assertEquals("Search in Stremio", published.action.title)
-        assertEquals(
-            LaunchRequest.TYPE_SEARCH,
-            published.action.viewIntent.getStringExtra(StremioLaunchActivity.EXTRA_TYPE),
-        )
+        val viewIntent = published.action.viewIntent
+        assertEquals(LaunchRequest.TYPE_SEARCH, viewIntent.getStringExtra(StremioLaunchActivity.EXTRA_TYPE))
         assertEquals(
             "Some Very New Show",
-            published.action.viewIntent.getStringExtra(StremioLaunchActivity.EXTRA_TITLE),
+            viewIntent.getStringExtra(StremioLaunchActivity.EXTRA_TITLE),
         )
+        // Stremio's search link has no episode form and ignores these, but Fireguy matches on the
+        // name, so carrying them is what lets it still answer with the episode.
+        assertEquals(1, viewIntent.getIntExtra(StremioLaunchActivity.EXTRA_SEASON, -1))
+        assertEquals(1, viewIntent.getIntExtra(StremioLaunchActivity.EXTRA_EPISODE, -1))
     }
 
     @Test

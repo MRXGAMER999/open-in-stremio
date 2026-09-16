@@ -28,7 +28,7 @@ class HomeScreenTest {
         setContent(HomeUiState.Ready(StatusVariant.ACTIVE))
 
         composeTestRule.onNodeWithText("Open in Stremio").assertIsDisplayed()
-        composeTestRule.onNodeWithText("SeriesGuide → Stremio").assertIsDisplayed()
+        composeTestRule.onNodeWithText("SeriesGuide → Stremio or Fireguy").assertIsDisplayed()
         composeTestRule.onNodeWithText("Extension enabled").assertIsDisplayed()
         composeTestRule.onNodeWithText("Active inside SeriesGuide").assertIsDisplayed()
     }
