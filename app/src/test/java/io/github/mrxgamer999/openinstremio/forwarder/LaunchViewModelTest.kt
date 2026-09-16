@@ -113,7 +113,24 @@ class LaunchViewModelTest {
         val decision =
             viewModel.decide(request(type = "movie", imdbId = "tt0068646", title = "The Godfather"))
 
-        assertEquals(LaunchDecision.ShowChooser(listOf(Target.STREMIO, Target.FIREGUY)), decision)
+        assertEquals(
+            LaunchDecision.ShowChooser(listOf(Target.STREMIO, Target.FIREGUY), isSearch = false),
+            decision,
+        )
+    }
+
+    @Test
+    fun bothInstalled_searchFallback_showsAChooserThatSaysSearch() {
+        val viewModel = LaunchViewModel(bothInstalled, isTv = false)
+
+        // The published button said "Search in…" for this title; the rows must not promise to
+        // open something that has no id to open.
+        val decision = viewModel.decide(request(type = "search", title = "Some Very New Show"))
+
+        assertEquals(
+            LaunchDecision.ShowChooser(listOf(Target.STREMIO, Target.FIREGUY), isSearch = true),
+            decision,
+        )
     }
 
     @Test

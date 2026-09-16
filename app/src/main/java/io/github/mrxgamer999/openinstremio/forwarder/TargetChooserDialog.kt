@@ -30,11 +30,16 @@ import io.github.mrxgamer999.openinstremio.R
  * button per title, so this dialog is where the per-app choice lives - each row says in full
  * where it goes, the way the button itself does when there is only one place to go.
  *
+ * A title with no IMDb id reaches a search rather than a detail page, and the rows say so: the
+ * button that led here said "Search in…" too, and a row promising to open a title nobody can
+ * address would be a lie the very next screen exposes.
+ *
  * The first row requests initial focus so a D-pad remote lands on it immediately.
  */
 @Composable
 fun TargetChooserDialog(
     targets: List<Target>,
+    isSearch: Boolean,
     onPick: (Target) -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -42,14 +47,18 @@ fun TargetChooserDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.chooser_title)) },
+        title = {
+            Text(stringResource(if (isSearch) R.string.chooser_title_search else R.string.chooser_title))
+        },
         text = {
             Column {
                 targets.forEachIndexed { index, target ->
                     ListItem(
                         headlineContent = {
                             Text(
-                                stringResource(target.openLabelRes),
+                                stringResource(
+                                    if (isSearch) target.searchLabelRes else target.openLabelRes
+                                ),
                                 style = MaterialTheme.typography.titleMedium,
                             )
                         },

@@ -21,7 +21,7 @@ class TargetChooserDialogTest {
     fun bothRows_nameWhereTheyGo() {
         composeTestRule.setContent {
             OpenInStremioTheme {
-                TargetChooserDialog(targets = bothTargets, onPick = {}, onDismiss = {})
+                TargetChooserDialog(targets = bothTargets, isSearch = false, onPick = {}, onDismiss = {})
             }
         }
 
@@ -35,7 +35,12 @@ class TargetChooserDialogTest {
         var picked: Target? = null
         composeTestRule.setContent {
             OpenInStremioTheme {
-                TargetChooserDialog(targets = bothTargets, onPick = { picked = it }, onDismiss = {})
+                TargetChooserDialog(
+                    targets = bothTargets,
+                    isSearch = false,
+                    onPick = { picked = it },
+                    onDismiss = {},
+                )
             }
         }
 
@@ -49,7 +54,12 @@ class TargetChooserDialogTest {
         var picked: Target? = null
         composeTestRule.setContent {
             OpenInStremioTheme {
-                TargetChooserDialog(targets = bothTargets, onPick = { picked = it }, onDismiss = {})
+                TargetChooserDialog(
+                    targets = bothTargets,
+                    isSearch = false,
+                    onPick = { picked = it },
+                    onDismiss = {},
+                )
             }
         }
 
@@ -59,12 +69,27 @@ class TargetChooserDialogTest {
     }
 
     @Test
+    fun searchVariant_saysSearchEverywhere() {
+        composeTestRule.setContent {
+            OpenInStremioTheme {
+                TargetChooserDialog(targets = bothTargets, isSearch = true, onPick = {}, onDismiss = {})
+            }
+        }
+
+        composeTestRule.onNodeWithText("Search for this title in…").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Search in Stremio").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Search in Fireguy").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Open in Stremio").assertDoesNotExist()
+    }
+
+    @Test
     fun notNow_firesDismiss() {
         var dismissed = false
         composeTestRule.setContent {
             OpenInStremioTheme {
                 TargetChooserDialog(
                     targets = bothTargets,
+                    isSearch = false,
                     onPick = {},
                     onDismiss = { dismissed = true },
                 )
