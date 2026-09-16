@@ -2,6 +2,8 @@
 
 An open-source Android extension for [SeriesGuide](https://seriesguide.battlelancer.com/) that adds an **"Open in Stremio"** button under every movie and TV episode. Tap it, and [Stremio](https://www.stremio.com/) opens directly on that exact title — no searching, no typing.
 
+It opens **Fireguy On Demand** the same way if you have it. SeriesGuide gives an extension one button per title, so with both apps installed the button reads "Open in…" and asks which one you meant; with only one of them, it names that one and goes straight there.
+
 Works on Android phones and on Android TV (including the NVIDIA Shield).
 
 | Home | Setup guide | About | If Stremio is missing |
@@ -11,7 +13,7 @@ Works on Android phones and on Android TV (including the NVIDIA Shield).
 ## What you need
 
 - The **SeriesGuide** app ([Google Play](https://play.google.com/store/apps/details?id=com.battlelancer.seriesguide))
-- The **Stremio** app ([Google Play](https://play.google.com/store/apps/details?id=com.stremio.one))
+- The **Stremio** app ([Google Play](https://play.google.com/store/apps/details?id=com.stremio.one)), and/or the sideloaded **Fireguy On Demand** app
 - Android 6.0 or newer
 
 ## Install on a phone
@@ -40,8 +42,9 @@ You may need to enable installing unknown apps in the TV's settings. After insta
 - Tapping the button opens a Stremio deep link:
   - Movies: `stremio:///detail/movie/<imdbId>/<imdbId>`
   - Episodes: `stremio:///detail/series/<showImdbId>/<showImdbId>:<season>:<episode>`
-- If a title has no IMDb id anywhere (rare — very new or obscure titles), the button becomes **"Search in Stremio"** instead of leading nowhere.
-- If Stremio isn't installed, you get a friendly dialog with a Play Store link — nothing crashes, nothing fails silently.
+- Fireguy has one link shape, because it resolves a title against its own catalogue rather than addressing it by a route: `fireguy://title?name=<title>[&imdb=<imdbId>][&season=<season>&episode=<episode>]`. The name always rides along — Fireguy's IMDb ids are re-derived on every catalogue refresh and only cover the rows its metadata feed could match, so an id alone would miss for reasons this app cannot see. A title Fireguy doesn't carry lands on its search screen with the name filled in.
+- If a title has no IMDb id anywhere (rare — very new or obscure titles), the button becomes **"Search in Stremio"** instead of leading nowhere. The season and episode numbers still ride along, so Fireguy can answer with the episode even when Stremio can only search.
+- If the app you pick isn't installed, you get a friendly dialog — nothing crashes, nothing fails silently. Stremio's has a Play Store link; Fireguy's doesn't, because it's sideloaded and there is nowhere to send you.
 - On Android TV the link asks Stremio to auto-play (`autoPlay=true`). Stremio only honors this when you've already picked a stream for that title before; otherwise it lands on the title's detail page, ready to play — same as on the phone.
 
 ## Building from source
