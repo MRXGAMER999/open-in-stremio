@@ -3,16 +3,23 @@
 
     <!-- Extension as it appears in SeriesGuide's extension list -->
     <string name="extension_name">Open in Stremio</string>
-    <string name="extension_description">Adds an Open in Stremio button to episodes and movies.</string>
+    <string name="extension_description">Adds a button to episodes and movies that opens them in Stremio or Fireguy.</string>
 
-    <!-- Action button titles shown under episodes/movies inside SeriesGuide -->
+    <!-- Action button titles shown under episodes/movies inside SeriesGuide. SeriesGuide shows
+         one per extension, so the label names the one installed player, or stays neutral when
+         both are there and the tap has to ask which. -->
     <string name="action_open_in_stremio">Open in Stremio</string>
     <string name="action_search_in_stremio">Search in Stremio</string>
+    <string name="action_open_in_fireguy">Open in Fireguy</string>
+    <string name="action_search_in_fireguy">Search in Fireguy</string>
+    <string name="action_open_in">Open in…</string>
+    <string name="action_search_in">Search in…</string>
 
     <!-- Home screen -->
-    <string name="home_subtitle">SeriesGuide → Stremio</string>
+    <string name="home_subtitle">SeriesGuide → Stremio or Fireguy</string>
     <string name="home_flow_seriesguide">SeriesGuide</string>
     <string name="home_flow_stremio">Stremio</string>
+    <string name="home_flow_fireguy">Fireguy</string>
     <string name="home_menu_setup">Setup guide</string>
     <string name="home_menu_about">About</string>
     <string name="home_menu_updates">Check for updates</string>
@@ -30,13 +37,13 @@
     <string name="setup_next">Next</string>
     <string name="setup_finish">Finish setup</string>
     <string name="setup_1_title">What this does</string>
-    <string name="setup_1_body">This add-on puts an “Open in Stremio” button on your movies and episodes in SeriesGuide. Tap it, and Stremio opens on that exact title.</string>
+    <string name="setup_1_body">This add-on puts an “Open in Stremio” button on your movies and episodes in SeriesGuide. Tap it, and Stremio opens on that exact title. It opens Fireguy the same way if you have it.</string>
     <string name="setup_2_title">Turn it on in SeriesGuide</string>
     <string name="setup_2_body">The button only appears after you switch the extension on inside SeriesGuide. Open Extensions and enable “Open in Stremio”.</string>
-    <string name="setup_3_title">Make sure Stremio is installed</string>
-    <string name="setup_3_body">The button opens the Stremio app, so it needs to be installed. If it isn’t on your device yet, grab it first — it’s free.</string>
+    <string name="setup_3_title">Make sure a player is installed</string>
+    <string name="setup_3_body">The button opens Stremio, so grab it if it isn’t on your device yet — it’s free. Fireguy works too if you have it sideloaded, and with both installed the button asks which one you want.</string>
     <string name="setup_4_title">You’re all set</string>
-    <string name="setup_4_body">That’s it. Open any movie or episode in SeriesGuide and look for “Open in Stremio”.</string>
+    <string name="setup_4_body">That’s it. Open any movie or episode in SeriesGuide and look for the “Open in…” button.</string>
     <string name="setup_open_sg_extensions">Open SeriesGuide → Extensions</string>
     <string name="setup_get_stremio">Get Stremio on Google Play</string>
     <string name="setup_sg_missing_snackbar">SeriesGuide isn’t installed on this device.</string>
@@ -67,9 +74,13 @@
     <string name="updates_error">Couldn’t check for updates. Check your connection and try again.</string>
     <string name="updates_retry">Retry</string>
 
-    <!-- Forwarder: Stremio-not-installed dialog -->
+    <!-- Forwarder: which player to open, and the not-installed dialogs -->
+    <string name="chooser_title">Open this title in…</string>
     <string name="stremio_missing_title">Stremio isn’t installed</string>
     <string name="stremio_missing_body">To open titles you’ll need the free Stremio app. Install it, then tap the button again.</string>
     <string name="stremio_missing_get">Get Stremio on Google Play</string>
-    <string name="stremio_missing_not_now">Not now</string>
+    <!-- No store button here: Fireguy is sideloaded, so there is nowhere to send anyone. -->
+    <string name="fireguy_missing_title">Fireguy isn’t installed</string>
+    <string name="fireguy_missing_body">To open titles in Fireguy you’ll need the Fireguy On Demand app on this device. Install it, then tap the button again.</string>
+    <string name="missing_not_now">Not now</string>
 </resources>

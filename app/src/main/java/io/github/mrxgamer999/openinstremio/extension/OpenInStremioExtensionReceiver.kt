@@ -138,7 +138,17 @@ class OpenInStremioExtensionReceiver : BroadcastReceiver() {
             episode.showImdbId?.takeUnless { it.isBlank() }
                 ?: cached(context) { it.cachedShow(episode.showTmdbId) }
         if (imdbId == null) {
-            publishSearch(context, subscriptions, identifier, title, OutgoingConstants.ACTION_TYPE_EPISODE)
+            // The numbers ride along even though a search cannot use them: Fireguy matches on
+            // the name, so with them it still answers with the episode rather than the show.
+            publishSearch(
+                context,
+                subscriptions,
+                identifier,
+                title,
+                OutgoingConstants.ACTION_TYPE_EPISODE,
+                season,
+                number,
+            )
             // A lookup needs something to look up; without an id the fallback is the final answer.
             return episode.showTmdbId?.takeIf { it > 0 }?.let {
                 Upgrade.Episode(identifier, title, it, season, number)
@@ -146,7 +156,7 @@ class OpenInStremioExtensionReceiver : BroadcastReceiver() {
         }
 
         subscriptions.publish(
-            StremioActions.openEpisode(context, identifier, imdbId, title, season, number),
+            LaunchActions.openEpisode(context, identifier, imdbId, title, season, number),
             OutgoingConstants.ACTION_TYPE_EPISODE,
         )
         return null
@@ -169,7 +179,7 @@ class OpenInStremioExtensionReceiver : BroadcastReceiver() {
         }
 
         subscriptions.publish(
-            StremioActions.openMovie(context, identifier, imdbId, title),
+            LaunchActions.openMovie(context, identifier, imdbId, title),
             OutgoingConstants.ACTION_TYPE_MOVIE,
         )
         return null
@@ -181,7 +191,12 @@ class OpenInStremioExtensionReceiver : BroadcastReceiver() {
         identifier: Int,
         title: String,
         actionType: Int,
-    ) = subscriptions.publish(StremioActions.search(context, identifier, title), actionType)
+        season: Int? = null,
+        episode: Int? = null,
+    ) = subscriptions.publish(
+        LaunchActions.search(context, identifier, title, season, episode),
+        actionType,
+    )
 
     /**
      * Replaces the search fallback with a direct link, once TMDb has answered. Runs detached, so
@@ -192,7 +207,7 @@ class OpenInStremioExtensionReceiver : BroadcastReceiver() {
             when (request) {
                 is Upgrade.Episode -> {
                     val imdbId = ImdbLookups.resolveShow(context, request.tmdbId) ?: return
-                    StremioActions.openEpisode(
+                    LaunchActions.openEpisode(
                         context,
                         request.identifier,
                         imdbId,
@@ -203,7 +218,7 @@ class OpenInStremioExtensionReceiver : BroadcastReceiver() {
                 }
                 is Upgrade.Movie -> {
                     val imdbId = ImdbLookups.resolveMovie(context, request.tmdbId) ?: return
-                    StremioActions.openMovie(context, request.identifier, imdbId, request.title)
+                    LaunchActions.openMovie(context, request.identifier, imdbId, request.title)
                 }
             }
         ExtensionSubscriptions(context).publish(action, request.actionType)

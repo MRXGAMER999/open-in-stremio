@@ -8,6 +8,7 @@ object Packages {
     const val SERIESGUIDE = "com.battlelancer.seriesguide"
     const val SERIESGUIDE_AMAZON = "com.uwetrottmann.seriesguide.amzn"
     const val STREMIO = "com.stremio.one"
+    const val FIREGUY = "com.fireguy.ondemand"
 }
 
 fun interface PackageChecker {

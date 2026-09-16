@@ -22,6 +22,7 @@ import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material.icons.filled.Update
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.Info
@@ -114,7 +115,7 @@ internal fun HomeScreen(uiState: HomeUiState, onNavigate: (NavKey) -> Unit, modi
             StatusCard(variant = uiState.statusVariant)
         }
 
-        // SeriesGuide -> Stremio flow card
+        // SeriesGuide -> player flow card
         OutlinedCard(modifier = Modifier.fillMaxWidth().padding(top = 12.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth().padding(vertical = 18.dp),
@@ -135,6 +136,12 @@ internal fun HomeScreen(uiState: HomeUiState, onNavigate: (NavKey) -> Unit, modi
                 FlowTile(
                     icon = Icons.Filled.PlayArrow,
                     label = stringResource(R.string.home_flow_stremio),
+                    container = MaterialTheme.colorScheme.primaryContainer,
+                    content = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
+                FlowTile(
+                    icon = Icons.Filled.Tv,
+                    label = stringResource(R.string.home_flow_fireguy),
                     container = MaterialTheme.colorScheme.primaryContainer,
                     content = MaterialTheme.colorScheme.onPrimaryContainer,
                 )
