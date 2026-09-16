@@ -53,12 +53,11 @@ fun TargetChooserDialog(
                                 style = MaterialTheme.typography.titleMedium,
                             )
                         },
+                        // The requester has to come before the focus target `clickable` adds,
+                        // or it never attaches and requestFocus throws.
                         modifier =
-                            Modifier.clickable { onPick(target) }
-                                .then(
-                                    if (index == 0) Modifier.focusRequester(focusRequester)
-                                    else Modifier
-                                ),
+                            (if (index == 0) Modifier.focusRequester(focusRequester) else Modifier)
+                                .clickable { onPick(target) },
                         leadingContent = {
                             Box(
                                 modifier =
