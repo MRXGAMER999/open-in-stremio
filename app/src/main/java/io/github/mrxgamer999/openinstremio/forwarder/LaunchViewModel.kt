@@ -24,8 +24,14 @@ sealed interface LaunchDecision {
     /** The target is installed: fire this deep link and finish. */
     data class Launch(val target: Target, val uri: String) : LaunchDecision
 
-    /** More than one target can serve this request, so the tap has to ask which one. */
-    data class ShowChooser(val targets: List<Target>) : LaunchDecision
+    /**
+     * More than one target can serve this request, so the tap has to ask which one.
+     *
+     * [isSearch] carries the same distinction the button's own label was chosen by, so the rows
+     * say "Search in X" under a "Search in…" button rather than promising to open a title that
+     * has no id to open.
+     */
+    data class ShowChooser(val targets: List<Target>, val isSearch: Boolean) : LaunchDecision
 
     /** The chosen target is missing: show its install dialog. */
     data class ShowMissing(val target: Target, val title: String?) : LaunchDecision
@@ -53,7 +59,8 @@ class LaunchViewModel(
     fun decide(request: LaunchRequest): LaunchDecision {
         val offerable = packageChecker.installedTargets().filter { buildUri(request, it) != null }
         return when {
-            offerable.size > 1 -> LaunchDecision.ShowChooser(offerable)
+            offerable.size > 1 ->
+                LaunchDecision.ShowChooser(offerable, request.type == LaunchRequest.TYPE_SEARCH)
             offerable.size == 1 -> choose(request, offerable.single())
             // Nothing installed, or nothing this request can address anywhere: Stremio's
             // install nudge is what a tap did before Fireguy existed, and `choose` still

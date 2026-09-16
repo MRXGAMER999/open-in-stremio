@@ -55,7 +55,8 @@ class StremioLaunchActivity : ComponentActivity() {
                 if (launch(decision.target, decision.uri)) finish()
                 else showMissingDialog(decision.target)
             }
-            is LaunchDecision.ShowChooser -> showChooser(decision.targets, request)
+            is LaunchDecision.ShowChooser ->
+                showChooser(decision.targets, decision.isSearch, request)
             is LaunchDecision.ShowMissing -> showMissingDialog(decision.target)
             LaunchDecision.Finish -> finish()
         }
@@ -85,11 +86,12 @@ class StremioLaunchActivity : ComponentActivity() {
             Target.FIREGUY -> Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
 
-    private fun showChooser(targets: List<Target>, request: LaunchRequest) {
+    private fun showChooser(targets: List<Target>, isSearch: Boolean, request: LaunchRequest) {
         setContent {
             OpenInStremioTheme {
                 TargetChooserDialog(
                     targets = targets,
+                    isSearch = isSearch,
                     onPick = { target -> act(viewModel.choose(request, target), request) },
                     onDismiss = ::finish,
                 )
