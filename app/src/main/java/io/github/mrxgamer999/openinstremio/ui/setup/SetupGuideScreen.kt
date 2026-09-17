@@ -5,18 +5,23 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.List
@@ -48,7 +53,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.mrxgamer999.openinstremio.R
+import io.github.mrxgamer999.openinstremio.data.AndroidPackageChecker
+import io.github.mrxgamer999.openinstremio.data.AppGraph
 import io.github.mrxgamer999.openinstremio.data.Packages
+import io.github.mrxgamer999.openinstremio.data.PlayerChoice
+import io.github.mrxgamer999.openinstremio.ui.choice.PlayerChoiceOptions
 import io.github.mrxgamer999.openinstremio.util.ExternalIntents
 import kotlinx.coroutines.launch
 
@@ -56,15 +65,23 @@ import kotlinx.coroutines.launch
 fun SetupGuideScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: SetupGuideViewModel = viewModel { SetupGuideViewModel() },
 ) {
+    val appContext = LocalContext.current.applicationContext
+    val viewModel: SetupGuideViewModel = viewModel {
+        SetupGuideViewModel(AppGraph.playerChoiceStore(appContext), AndroidPackageChecker(appContext))
+    }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    SetupGuideScreen(uiState = uiState, onBack = onBack, modifier = modifier)
+    SetupGuideScreen(uiState = uiState, onBack = onBack, onChoose = viewModel::choose, modifier = modifier)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun SetupGuideScreen(uiState: SetupGuideUiState, onBack: () -> Unit, modifier: Modifier = Modifier) {
+internal fun SetupGuideScreen(
+    uiState: SetupGuideUiState,
+    onBack: () -> Unit,
+    onChoose: (PlayerChoice) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val context = LocalContext.current
     val pagerState = rememberPagerState(pageCount = { uiState.pages.size })
     val snackbarHostState = remember { SnackbarHostState() }
@@ -91,45 +108,64 @@ internal fun SetupGuideScreen(uiState: SetupGuideUiState, onBack: () -> Unit, mo
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
             HorizontalPager(state = pagerState, modifier = Modifier.weight(1f)) { pageIndex ->
                 val page = uiState.pages[pageIndex]
-                Column(
-                    modifier = Modifier.fillMaxSize().padding(horizontal = 32.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                ) {
-                    PageIllustration(pageIndex)
-                    Text(
-                        text = stringResource(page.title),
-                        style = MaterialTheme.typography.headlineSmall,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(top = 24.dp),
-                    )
-                    Text(
-                        text = stringResource(page.body),
-                        style = MaterialTheme.typography.bodyLarge,
-                        textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 12.dp),
-                    )
-                    when (page.action) {
-                        SetupPageAction.OPEN_SG_EXTENSIONS ->
-                            FilledTonalButton(
-                                onClick = {
-                                    if (!ExternalIntents.openSeriesGuideExtensions(context)) {
-                                        scope.launch { snackbarHostState.showSnackbar(sgMissingMessage) }
-                                    }
-                                },
-                                modifier = Modifier.padding(top = 24.dp),
-                            ) {
-                                Text(stringResource(R.string.setup_open_sg_extensions))
-                            }
-                        SetupPageAction.GET_STREMIO ->
-                            FilledTonalButton(
-                                onClick = { ExternalIntents.openPlayStore(context, Packages.STREMIO) },
-                                modifier = Modifier.padding(top = 24.dp),
-                            ) {
-                                Text(stringResource(R.string.setup_get_stremio))
-                            }
-                        null -> Unit
+                // Scrolls when a page is taller than the screen (a TV in landscape), and still
+                // centres it when it is not.
+                BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                    Column(
+                        modifier =
+                            Modifier.fillMaxWidth()
+                                .verticalScroll(rememberScrollState())
+                                .heightIn(min = maxHeight)
+                                .padding(horizontal = 32.dp, vertical = 16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                    ) {
+                        page.illustration?.let { PageIllustration(it) }
+                        Text(
+                            text = stringResource(page.title),
+                            style = MaterialTheme.typography.headlineSmall,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(top = if (page.illustration != null) 24.dp else 0.dp),
+                        )
+                        Text(
+                            text =
+                                page.bodyArg?.let { stringResource(page.body, stringResource(it)) }
+                                    ?: stringResource(page.body),
+                            style = MaterialTheme.typography.bodyLarge,
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 12.dp),
+                        )
+                        when (page.action) {
+                            SetupPageAction.CHOOSE_PLAYERS ->
+                                PlayerChoiceOptions(
+                                    selected = uiState.choice,
+                                    stremioInstalled = uiState.stremioInstalled,
+                                    fireguyInstalled = uiState.fireguyInstalled,
+                                    onSelect = onChoose,
+                                    // Capped so the radios stay near their names on a tablet or TV.
+                                    modifier = Modifier.widthIn(max = 560.dp).fillMaxWidth().padding(top = 16.dp),
+                                )
+                            SetupPageAction.OPEN_SG_EXTENSIONS ->
+                                FilledTonalButton(
+                                    onClick = {
+                                        if (!ExternalIntents.openSeriesGuideExtensions(context)) {
+                                            scope.launch { snackbarHostState.showSnackbar(sgMissingMessage) }
+                                        }
+                                    },
+                                    modifier = Modifier.padding(top = 24.dp),
+                                ) {
+                                    Text(stringResource(R.string.setup_open_sg_extensions))
+                                }
+                            SetupPageAction.GET_STREMIO ->
+                                FilledTonalButton(
+                                    onClick = { ExternalIntents.openPlayStore(context, Packages.STREMIO) },
+                                    modifier = Modifier.padding(top = 24.dp),
+                                ) {
+                                    Text(stringResource(R.string.setup_get_stremio))
+                                }
+                            null -> Unit
+                        }
                     }
                 }
             }
@@ -162,6 +198,11 @@ internal fun SetupGuideScreen(uiState: SetupGuideUiState, onBack: () -> Unit, mo
             val isLastPage = pagerState.currentPage == uiState.pages.lastIndex
             Button(
                 onClick = {
+                    // Moving on from the choice page keeps what it shows, even untouched: the
+                    // user has now seen the choice, so the guide stops opening by itself.
+                    if (uiState.pages[pagerState.currentPage].action == SetupPageAction.CHOOSE_PLAYERS) {
+                        onChoose(uiState.choice)
+                    }
                     if (isLastPage) {
                         onBack()
                     } else {
@@ -179,28 +220,28 @@ internal fun SetupGuideScreen(uiState: SetupGuideUiState, onBack: () -> Unit, mo
 }
 
 @Composable
-private fun PageIllustration(pageIndex: Int) {
+private fun PageIllustration(illustration: SetupIllustration) {
     val (icon, container, content) =
-        when (pageIndex) {
-            0 ->
+        when (illustration) {
+            SetupIllustration.WELCOME ->
                 Triple(
                     Icons.Filled.PlayArrow,
                     MaterialTheme.colorScheme.primaryContainer,
                     MaterialTheme.colorScheme.onPrimaryContainer,
                 )
-            1 ->
+            SetupIllustration.SERIESGUIDE ->
                 Triple(
                     Icons.AutoMirrored.Filled.List,
                     MaterialTheme.colorScheme.tertiaryContainer,
                     MaterialTheme.colorScheme.onTertiaryContainer,
                 )
-            2 ->
+            SetupIllustration.INSTALL ->
                 Triple(
                     Icons.Filled.Download,
                     MaterialTheme.colorScheme.primaryContainer,
                     MaterialTheme.colorScheme.onPrimaryContainer,
                 )
-            else ->
+            SetupIllustration.DONE ->
                 Triple(
                     Icons.Filled.CheckCircle,
                     MaterialTheme.colorScheme.tertiaryContainer,

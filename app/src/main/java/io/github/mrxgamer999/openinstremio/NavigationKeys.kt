@@ -10,3 +10,5 @@ import kotlinx.serialization.Serializable
 @Serializable data object AboutKey : NavKey
 
 @Serializable data object UpdatesKey : NavKey
+
+@Serializable data object SettingsKey : NavKey

@@ -1,6 +1,7 @@
 package io.github.mrxgamer999.openinstremio.forwarder
 
 import io.github.mrxgamer999.openinstremio.data.PackageChecker
+import io.github.mrxgamer999.openinstremio.data.PlayerChoice
 import io.github.mrxgamer999.openinstremio.data.Packages
 
 /**
@@ -20,3 +21,15 @@ enum class Target(val packageId: String) {
 
 /** The subset of [Target] present on this device, in declaration order. */
 fun PackageChecker.installedTargets(): List<Target> = Target.entries.filter { isInstalled(it.packageId) }
+
+/**
+ * The targets a [PlayerChoice] allows, in declaration order. Lives here rather than on the enum so
+ * the data layer stays free of the forwarder.
+ */
+val PlayerChoice.targets: List<Target>
+    get() =
+        when (this) {
+            PlayerChoice.STREMIO -> listOf(Target.STREMIO)
+            PlayerChoice.FIREGUY -> listOf(Target.FIREGUY)
+            PlayerChoice.BOTH -> Target.entries
+        }

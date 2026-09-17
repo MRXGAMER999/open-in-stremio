@@ -13,6 +13,10 @@ import com.battlelancer.seriesguide.api.constants.OutgoingConstants
 import io.github.mrxgamer999.openinstremio.data.AppGraph
 import io.github.mrxgamer999.openinstremio.data.ExtensionStateStore
 import io.github.mrxgamer999.openinstremio.data.ImdbResolver
+import io.github.mrxgamer999.openinstremio.data.PlayerChoice
+import io.github.mrxgamer999.openinstremio.forwarder.Target
+import io.github.mrxgamer999.openinstremio.forwarder.targets
+import kotlinx.coroutines.flow.first
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
@@ -103,13 +107,14 @@ class OpenInStremioExtensionReceiver : BroadcastReceiver() {
         val identifier = intent.getIntExtra(IncomingConstants.EXTRA_ENTITY_IDENTIFIER, 0)
         if (identifier <= 0) return Answered()
         val subscriptions = ExtensionSubscriptions(context)
+        val chosen = chosenTargets(context, CHOICE_FAST_TIMEOUT_MS)
 
         val episode = intent.getBundleExtra(IncomingConstants.EXTRA_EPISODE)?.let(Episode::fromBundle)
         val movie = intent.getBundleExtra(IncomingConstants.EXTRA_MOVIE)?.let(Movie::fromBundle)
         val upgrade =
             when {
-                episode != null -> publishEpisode(context, subscriptions, identifier, episode)
-                movie != null -> publishMovie(context, subscriptions, identifier, movie)
+                episode != null -> publishEpisode(context, subscriptions, chosen, identifier, episode)
+                movie != null -> publishMovie(context, subscriptions, chosen, identifier, movie)
                 else -> null
             }
 
@@ -121,6 +126,7 @@ class OpenInStremioExtensionReceiver : BroadcastReceiver() {
     private suspend fun publishEpisode(
         context: Context,
         subscriptions: ExtensionSubscriptions,
+        chosen: List<Target>,
         identifier: Int,
         episode: Episode,
     ): Upgrade? {
@@ -130,7 +136,14 @@ class OpenInStremioExtensionReceiver : BroadcastReceiver() {
         // Without a season/episode number a direct link is impossible, so neither the cache nor a
         // lookup buys anything.
         if (season == null || number == null) {
-            publishSearch(context, subscriptions, identifier, title, OutgoingConstants.ACTION_TYPE_EPISODE)
+            publishSearch(
+                context,
+                subscriptions,
+                chosen,
+                identifier,
+                title,
+                OutgoingConstants.ACTION_TYPE_EPISODE,
+            )
             return null
         }
 
@@ -143,6 +156,7 @@ class OpenInStremioExtensionReceiver : BroadcastReceiver() {
             publishSearch(
                 context,
                 subscriptions,
+                chosen,
                 identifier,
                 title,
                 OutgoingConstants.ACTION_TYPE_EPISODE,
@@ -156,7 +170,7 @@ class OpenInStremioExtensionReceiver : BroadcastReceiver() {
         }
 
         subscriptions.publish(
-            LaunchActions.openEpisode(context, identifier, imdbId, title, season, number),
+            LaunchActions.openEpisode(context, chosen, identifier, imdbId, title, season, number),
             OutgoingConstants.ACTION_TYPE_EPISODE,
         )
         return null
@@ -166,6 +180,7 @@ class OpenInStremioExtensionReceiver : BroadcastReceiver() {
     private suspend fun publishMovie(
         context: Context,
         subscriptions: ExtensionSubscriptions,
+        chosen: List<Target>,
         identifier: Int,
         movie: Movie,
     ): Upgrade? {
@@ -174,12 +189,12 @@ class OpenInStremioExtensionReceiver : BroadcastReceiver() {
             movie.imdbId?.takeUnless { it.isBlank() }
                 ?: cached(context) { it.cachedMovie(movie.tmdbId) }
         if (imdbId == null) {
-            publishSearch(context, subscriptions, identifier, title, OutgoingConstants.ACTION_TYPE_MOVIE)
+            publishSearch(context, subscriptions, chosen, identifier, title, OutgoingConstants.ACTION_TYPE_MOVIE)
             return movie.tmdbId?.takeIf { it > 0 }?.let { Upgrade.Movie(identifier, title, it) }
         }
 
         subscriptions.publish(
-            LaunchActions.openMovie(context, identifier, imdbId, title),
+            LaunchActions.openMovie(context, chosen, identifier, imdbId, title),
             OutgoingConstants.ACTION_TYPE_MOVIE,
         )
         return null
@@ -188,13 +203,14 @@ class OpenInStremioExtensionReceiver : BroadcastReceiver() {
     private fun publishSearch(
         context: Context,
         subscriptions: ExtensionSubscriptions,
+        chosen: List<Target>,
         identifier: Int,
         title: String,
         actionType: Int,
         season: Int? = null,
         episode: Int? = null,
     ) = subscriptions.publish(
-        LaunchActions.search(context, identifier, title, season, episode),
+        LaunchActions.search(context, chosen, identifier, title, season, episode),
         actionType,
     )
 
@@ -203,12 +219,15 @@ class OpenInStremioExtensionReceiver : BroadcastReceiver() {
      * SeriesGuide may well have moved on — publishing to a title it no longer shows is harmless.
      */
     private suspend fun publishUpgrade(context: Context, request: Upgrade) {
+        // Detached, so there is time to wait for the choice properly.
+        val chosen = chosenTargets(context, CHOICE_TIMEOUT_MS)
         val action =
             when (request) {
                 is Upgrade.Episode -> {
                     val imdbId = ImdbLookups.resolveShow(context, request.tmdbId) ?: return
                     LaunchActions.openEpisode(
                         context,
+                        chosen,
                         request.identifier,
                         imdbId,
                         request.title,
@@ -218,7 +237,7 @@ class OpenInStremioExtensionReceiver : BroadcastReceiver() {
                 }
                 is Upgrade.Movie -> {
                     val imdbId = ImdbLookups.resolveMovie(context, request.tmdbId) ?: return
-                    LaunchActions.openMovie(context, request.identifier, imdbId, request.title)
+                    LaunchActions.openMovie(context, chosen, request.identifier, imdbId, request.title)
                 }
             }
         ExtensionSubscriptions(context).publish(action, request.actionType)
@@ -240,6 +259,24 @@ class OpenInStremioExtensionReceiver : BroadcastReceiver() {
             Log.w(TAG, "IMDb-id cache lookup failed", e)
             null
         }
+
+    /**
+     * The players the user chose, for the button's label only: the forwarder reads the choice
+     * again when the button is tapped. So giving up here costs at most a label that reads as [PlayerChoice.BOTH]
+     * until SeriesGuide asks again, never a wrong destination, and it keeps the button fast.
+     */
+    private suspend fun chosenTargets(context: Context, timeoutMs: Long): List<Target> {
+        val choice =
+            try {
+                withTimeoutOrNull(timeoutMs) { AppGraph.playerChoiceStore(context).choice.first() }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.w(TAG, "Player choice read failed", e)
+                null
+            }
+        return (choice ?: PlayerChoice.BOTH).targets
+    }
 
     /** Best-effort: a failed flag write must never affect the published action. */
     private suspend fun setActive(context: Context, active: Boolean) {
@@ -295,6 +332,13 @@ class OpenInStremioExtensionReceiver : BroadcastReceiver() {
         private const val TAG = "OpenInStremioExt"
 
         private const val CACHE_TIMEOUT_MS = 2_000L
+        private const val CHOICE_TIMEOUT_MS = 2_000L
+
+        /**
+         * Tight because it runs before the action exists, and SeriesGuide only waits for so long.
+         * The DataStore is opened once per process, so this only matters on a cold start.
+         */
+        private const val CHOICE_FAST_TIMEOUT_MS = 300L
         private const val ACTIVE_WRITE_TIMEOUT_MS = 2_000L
 
         /** Idle workers are released: this process is usually only alive for the broadcast. */

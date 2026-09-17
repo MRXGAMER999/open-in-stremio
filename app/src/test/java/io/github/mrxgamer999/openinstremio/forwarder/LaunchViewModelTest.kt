@@ -26,7 +26,7 @@ class LaunchViewModelTest {
     fun movie_withStremioInstalled_launchesDetailLink() {
         val viewModel = LaunchViewModel(stremioOnly, isTv = false)
 
-        val decision = viewModel.decide(request(type = "movie", imdbId = "tt0068646"))
+        val decision = viewModel.decide(request(type = "movie", imdbId = "tt0068646"), Target.entries)
 
         assertEquals(
             LaunchDecision.Launch(Target.STREMIO, "stremio:///detail/movie/tt0068646/tt0068646"),
@@ -39,7 +39,7 @@ class LaunchViewModelTest {
         val viewModel = LaunchViewModel(stremioOnly, isTv = false)
 
         val decision =
-            viewModel.decide(request(type = "series", imdbId = "tt0108778", season = 1, episode = 1))
+            viewModel.decide(request(type = "series", imdbId = "tt0108778", season = 1, episode = 1), Target.entries)
 
         assertEquals(
             LaunchDecision.Launch(Target.STREMIO, "stremio:///detail/series/tt0108778/tt0108778:1:1"),
@@ -51,7 +51,7 @@ class LaunchViewModelTest {
     fun onTv_appendsAutoPlay() {
         val viewModel = LaunchViewModel(stremioOnly, isTv = true)
 
-        val decision = viewModel.decide(request(type = "movie", imdbId = "tt0068646"))
+        val decision = viewModel.decide(request(type = "movie", imdbId = "tt0068646"), Target.entries)
 
         assertEquals(
             LaunchDecision.Launch(
@@ -66,7 +66,7 @@ class LaunchViewModelTest {
     fun search_launchesSearchLink() {
         val viewModel = LaunchViewModel(stremioOnly, isTv = false)
 
-        val decision = viewModel.decide(request(type = "search", title = "Breaking Bad"))
+        val decision = viewModel.decide(request(type = "search", title = "Breaking Bad"), Target.entries)
 
         assertEquals(
             LaunchDecision.Launch(Target.STREMIO, "stremio:///search?search=Breaking%20Bad"),
@@ -80,7 +80,7 @@ class LaunchViewModelTest {
 
         // Missing episode number: not enough for a detail link, but the title is usable.
         val decision =
-            viewModel.decide(request(type = "series", imdbId = "tt0108778", season = 1, title = "Friends"))
+            viewModel.decide(request(type = "series", imdbId = "tt0108778", season = 1, title = "Friends"), Target.entries)
 
         assertEquals(
             LaunchDecision.Launch(Target.STREMIO, "stremio:///search?search=Friends"),
@@ -93,7 +93,7 @@ class LaunchViewModelTest {
         val viewModel = LaunchViewModel(noneInstalled, isTv = false)
 
         val decision =
-            viewModel.decide(request(type = "movie", imdbId = "tt0068646", title = "The Godfather"))
+            viewModel.decide(request(type = "movie", imdbId = "tt0068646", title = "The Godfather"), Target.entries)
 
         assertEquals(LaunchDecision.ShowMissing(Target.STREMIO, "The Godfather"), decision)
     }
@@ -102,8 +102,8 @@ class LaunchViewModelTest {
     fun nothingUsable_finishes() {
         val viewModel = LaunchViewModel(stremioOnly, isTv = false)
 
-        assertEquals(LaunchDecision.Finish, viewModel.decide(request()))
-        assertEquals(LaunchDecision.Finish, viewModel.decide(request(type = "movie", title = "  ")))
+        assertEquals(LaunchDecision.Finish, viewModel.decide(request(), Target.entries))
+        assertEquals(LaunchDecision.Finish, viewModel.decide(request(type = "movie", title = "  "), Target.entries))
     }
 
     @Test
@@ -111,7 +111,7 @@ class LaunchViewModelTest {
         val viewModel = LaunchViewModel(bothInstalled, isTv = false)
 
         val decision =
-            viewModel.decide(request(type = "movie", imdbId = "tt0068646", title = "The Godfather"))
+            viewModel.decide(request(type = "movie", imdbId = "tt0068646", title = "The Godfather"), Target.entries)
 
         assertEquals(
             LaunchDecision.ShowChooser(listOf(Target.STREMIO, Target.FIREGUY), isSearch = false),
@@ -125,7 +125,7 @@ class LaunchViewModelTest {
 
         // The published button said "Search in…" for this title; the rows must not promise to
         // open something that has no id to open.
-        val decision = viewModel.decide(request(type = "search", title = "Some Very New Show"))
+        val decision = viewModel.decide(request(type = "search", title = "Some Very New Show"), Target.entries)
 
         assertEquals(
             LaunchDecision.ShowChooser(listOf(Target.STREMIO, Target.FIREGUY), isSearch = true),
@@ -138,7 +138,7 @@ class LaunchViewModelTest {
         val viewModel = LaunchViewModel(bothInstalled, isTv = false)
 
         // No title, so Fireguy has nothing to match on and only Stremio can answer.
-        val decision = viewModel.decide(request(type = "movie", imdbId = "tt0068646"))
+        val decision = viewModel.decide(request(type = "movie", imdbId = "tt0068646"), Target.entries)
 
         assertEquals(
             LaunchDecision.Launch(Target.STREMIO, "stremio:///detail/movie/tt0068646/tt0068646"),
@@ -151,7 +151,7 @@ class LaunchViewModelTest {
         val viewModel = LaunchViewModel(fireguyOnly, isTv = false)
 
         val decision =
-            viewModel.decide(request(type = "movie", imdbId = "tt0068646", title = "The Godfather"))
+            viewModel.decide(request(type = "movie", imdbId = "tt0068646", title = "The Godfather"), Target.entries)
 
         assertEquals(
             LaunchDecision.Launch(
@@ -201,7 +201,7 @@ class LaunchViewModelTest {
         // No IMDb id, so the receiver published this as a search - but the numbers came along,
         // and Fireguy matches on the name, so it can still answer with the episode.
         val decision =
-            viewModel.decide(request(type = "search", season = 2, episode = 5, title = "Friends"))
+            viewModel.decide(request(type = "search", season = 2, episode = 5, title = "Friends"), Target.entries)
 
         assertEquals(
             LaunchDecision.Launch(Target.FIREGUY, "fireguy://title?name=Friends&season=2&episode=5"),
@@ -213,7 +213,7 @@ class LaunchViewModelTest {
     fun fireguy_withoutAnImdbId_stillLinksOnTheName() {
         val viewModel = LaunchViewModel(fireguyOnly, isTv = false)
 
-        val decision = viewModel.decide(request(type = "search", title = "Law & Order: SVU"))
+        val decision = viewModel.decide(request(type = "search", title = "Law & Order: SVU"), Target.entries)
 
         assertEquals(
             LaunchDecision.Launch(
@@ -222,5 +222,34 @@ class LaunchViewModelTest {
             ),
             decision,
         )
+    }
+
+    @Test
+    fun onlyStremioChosen_withBothInstalled_launchesStremioWithoutAsking() {
+        val viewModel = LaunchViewModel(bothInstalled, isTv = false)
+
+        val decision =
+            viewModel.decide(
+                request(type = "movie", imdbId = "tt0068646", title = "The Godfather"),
+                listOf(Target.STREMIO),
+            )
+
+        assertEquals(
+            LaunchDecision.Launch(Target.STREMIO, "stremio:///detail/movie/tt0068646/tt0068646"),
+            decision,
+        )
+    }
+
+    @Test
+    fun onlyFireguyChosen_whenMissing_showsFireguyDialog() {
+        val viewModel = LaunchViewModel(stremioOnly, isTv = false)
+
+        val decision =
+            viewModel.decide(
+                request(type = "movie", imdbId = "tt0068646", title = "The Godfather"),
+                listOf(Target.FIREGUY),
+            )
+
+        assertEquals(LaunchDecision.ShowMissing(Target.FIREGUY, "The Godfather"), decision)
     }
 }

@@ -3,11 +3,17 @@ package io.github.mrxgamer999.openinstremio.extension
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import androidx.datastore.preferences.core.edit
 import androidx.test.platform.app.InstrumentationRegistry
 import com.battlelancer.seriesguide.api.Episode
 import com.battlelancer.seriesguide.api.Movie
 import com.battlelancer.seriesguide.api.constants.IncomingConstants
+import io.github.mrxgamer999.openinstremio.data.AppGraph
+import io.github.mrxgamer999.openinstremio.data.PlayerChoice
+import io.github.mrxgamer999.openinstremio.data.PlayerChoiceStore
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 
 /**
  * Drives the extension the way SeriesGuide does: pairs [DebugSubscriberReceiver] with it as a real
@@ -20,7 +26,18 @@ internal class ExtensionHarness(
     private val extension = ComponentName(context, OpenInStremioExtensionReceiver::class.java.name)
     private val subscriber = ComponentName(context, DebugSubscriberReceiver::class.java.name)
 
+    private var savedChoice: String? = null
+
+    /**
+     * Also pins the player choice to Stremio, so the asserted labels read "Open in Stremio"
+     * whatever players the device has. [unsubscribe] puts the device's own choice back.
+     */
     fun subscribe() {
+        runBlocking {
+            val dataStore = AppGraph.dataStore(context)
+            savedChoice = dataStore.data.first()[PlayerChoiceStore.KEY_CHOICE]
+            dataStore.edit { it[PlayerChoiceStore.KEY_CHOICE] = PlayerChoice.STREMIO.name }
+        }
         DebugSubscriberReceiver.published.clear()
         sendSubscribe(TOKEN)
         awaitSubscription()
@@ -29,6 +46,12 @@ internal class ExtensionHarness(
     fun unsubscribe() {
         sendSubscribe(null)
         DebugSubscriberReceiver.published.clear()
+        runBlocking {
+            AppGraph.dataStore(context).edit { prefs ->
+                savedChoice?.let { prefs[PlayerChoiceStore.KEY_CHOICE] = it }
+                    ?: prefs.remove(PlayerChoiceStore.KEY_CHOICE)
+            }
+        }
     }
 
     fun sendSubscribe(token: String?) {

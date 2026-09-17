@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.map
 data class ExtensionStatus(
     val seriesGuideInstalled: Boolean,
     val stremioInstalled: Boolean,
+    val fireguyInstalled: Boolean,
     val extensionActive: Boolean,
 )
 
@@ -24,6 +25,7 @@ class ExtensionStatusRepository(
                     packageChecker.isInstalled(Packages.SERIESGUIDE) ||
                         packageChecker.isInstalled(Packages.SERIESGUIDE_AMAZON),
                 stremioInstalled = packageChecker.isInstalled(Packages.STREMIO),
+                fireguyInstalled = packageChecker.isInstalled(Packages.FIREGUY),
                 extensionActive = active,
             )
         }

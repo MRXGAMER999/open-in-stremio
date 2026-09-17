@@ -22,7 +22,7 @@ import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Tv
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Update
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.Info
@@ -35,6 +35,7 @@ import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -52,10 +53,15 @@ import androidx.navigation3.runtime.NavKey
 import io.github.mrxgamer999.openinstremio.AboutKey
 import io.github.mrxgamer999.openinstremio.BuildConfig
 import io.github.mrxgamer999.openinstremio.R
+import io.github.mrxgamer999.openinstremio.SettingsKey
 import io.github.mrxgamer999.openinstremio.SetupGuideKey
 import io.github.mrxgamer999.openinstremio.UpdatesKey
 import io.github.mrxgamer999.openinstremio.data.AppGraph
 import io.github.mrxgamer999.openinstremio.data.Packages
+import io.github.mrxgamer999.openinstremio.data.PlayerChoice
+import io.github.mrxgamer999.openinstremio.forwarder.Target
+import io.github.mrxgamer999.openinstremio.forwarder.icon
+import io.github.mrxgamer999.openinstremio.forwarder.targets
 import io.github.mrxgamer999.openinstremio.theme.OpenInStremioTheme
 import io.github.mrxgamer999.openinstremio.util.ExternalIntents
 
@@ -63,7 +69,10 @@ import io.github.mrxgamer999.openinstremio.util.ExternalIntents
 fun HomeScreen(onNavigate: (NavKey) -> Unit, modifier: Modifier = Modifier) {
     val appContext = LocalContext.current.applicationContext
     val viewModel: HomeViewModel = viewModel {
-        HomeViewModel(AppGraph.extensionStatusRepository(appContext))
+        HomeViewModel(
+            AppGraph.extensionStatusRepository(appContext),
+            AppGraph.playerChoiceStore(appContext).choice,
+        )
     }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     HomeScreen(uiState = uiState, onNavigate = onNavigate, modifier = modifier)
@@ -112,44 +121,18 @@ internal fun HomeScreen(uiState: HomeUiState, onNavigate: (NavKey) -> Unit, modi
         }
 
         if (uiState is HomeUiState.Ready) {
-            StatusCard(variant = uiState.statusVariant)
-        }
-
-        // SeriesGuide -> player flow card
-        OutlinedCard(modifier = Modifier.fillMaxWidth().padding(top = 12.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 18.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                FlowTile(
-                    icon = Icons.AutoMirrored.Filled.List,
-                    label = stringResource(R.string.home_flow_seriesguide),
-                    container = MaterialTheme.colorScheme.tertiaryContainer,
-                    content = MaterialTheme.colorScheme.onTertiaryContainer,
-                )
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.outline,
-                )
-                FlowTile(
-                    icon = Icons.Filled.PlayArrow,
-                    label = stringResource(R.string.home_flow_stremio),
-                    container = MaterialTheme.colorScheme.primaryContainer,
-                    content = MaterialTheme.colorScheme.onPrimaryContainer,
-                )
-                FlowTile(
-                    icon = Icons.Filled.Tv,
-                    label = stringResource(R.string.home_flow_fireguy),
-                    container = MaterialTheme.colorScheme.primaryContainer,
-                    content = MaterialTheme.colorScheme.onPrimaryContainer,
-                )
-            }
+            StatusCard(variant = uiState.statusVariant, choice = uiState.choice)
+            FlowCard(state = uiState, onChange = { onNavigate(SettingsKey) })
         }
 
         // Menu
         Card(modifier = Modifier.fillMaxWidth().padding(top = 12.dp)) {
+            MenuRow(
+                icon = Icons.Filled.Settings,
+                label = stringResource(R.string.home_menu_settings),
+                onClick = { onNavigate(SettingsKey) },
+            )
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
             MenuRow(
                 icon = Icons.AutoMirrored.Filled.MenuBook,
                 label = stringResource(R.string.home_menu_setup),
@@ -180,7 +163,7 @@ internal fun HomeScreen(uiState: HomeUiState, onNavigate: (NavKey) -> Unit, modi
 }
 
 @Composable
-private fun StatusCard(variant: StatusVariant, modifier: Modifier = Modifier) {
+private fun StatusCard(variant: StatusVariant, choice: PlayerChoice, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val container: Color
     val content: Color
@@ -194,7 +177,14 @@ private fun StatusCard(variant: StatusVariant, modifier: Modifier = Modifier) {
             content = MaterialTheme.colorScheme.onTertiaryContainer
             icon = Icons.Filled.CheckCircle
             title = stringResource(R.string.home_status_active_title)
-            body = stringResource(R.string.home_status_active_body)
+            body =
+                stringResource(
+                    when (choice) {
+                        PlayerChoice.STREMIO -> R.string.home_status_active_body_stremio
+                        PlayerChoice.FIREGUY -> R.string.home_status_active_body_fireguy
+                        PlayerChoice.BOTH -> R.string.home_status_active_body_both
+                    }
+                )
             onClick = null
         }
         StatusVariant.NOT_ENABLED -> {
@@ -238,8 +228,79 @@ private fun StatusCard(variant: StatusVariant, modifier: Modifier = Modifier) {
     }
 }
 
+/** SeriesGuide → the chosen app(s), and the way to change which. */
 @Composable
-private fun FlowTile(icon: ImageVector, label: String, container: Color, content: Color) {
+private fun FlowCard(state: HomeUiState.Ready, onChange: () -> Unit) {
+    OutlinedCard(modifier = Modifier.fillMaxWidth().padding(top = 12.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(top = 18.dp, bottom = 12.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.Top,
+        ) {
+            FlowTile(
+                icon = Icons.AutoMirrored.Filled.List,
+                label = stringResource(R.string.home_flow_seriesguide),
+                container = MaterialTheme.colorScheme.tertiaryContainer,
+                content = MaterialTheme.colorScheme.onTertiaryContainer,
+            )
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.outline,
+                modifier = Modifier.padding(top = 14.dp),
+            )
+            state.choice.targets.forEach { target ->
+                val installed =
+                    when (target) {
+                        Target.STREMIO -> state.stremioInstalled
+                        Target.FIREGUY -> state.fireguyInstalled
+                    }
+                FlowTile(
+                    icon = target.icon,
+                    label =
+                        stringResource(
+                            when (target) {
+                                Target.STREMIO -> R.string.home_flow_stremio
+                                Target.FIREGUY -> R.string.home_flow_fireguy
+                            }
+                        ),
+                    container = MaterialTheme.colorScheme.primaryContainer,
+                    content = MaterialTheme.colorScheme.onPrimaryContainer,
+                    caption = if (installed) null else stringResource(R.string.home_flow_not_installed),
+                )
+            }
+        }
+        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text =
+                    stringResource(
+                        when (state.choice) {
+                            PlayerChoice.STREMIO -> R.string.home_choice_stremio
+                            PlayerChoice.FIREGUY -> R.string.home_choice_fireguy
+                            PlayerChoice.BOTH -> R.string.home_choice_both
+                        }
+                    ),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.weight(1f),
+            )
+            TextButton(onClick = onChange) { Text(stringResource(R.string.home_choice_change)) }
+        }
+    }
+}
+
+@Composable
+private fun FlowTile(
+    icon: ImageVector,
+    label: String,
+    container: Color,
+    content: Color,
+    caption: String? = null,
+) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
             modifier = Modifier.size(52.dp).background(container, RoundedCornerShape(17.dp)),
@@ -253,6 +314,9 @@ private fun FlowTile(icon: ImageVector, label: String, container: Color, content
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 8.dp),
         )
+        caption?.let {
+            Text(text = it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
+        }
     }
 }
 
@@ -291,6 +355,15 @@ private fun MenuRow(icon: ImageVector, label: String, onClick: () -> Unit) {
 @Composable
 private fun HomeScreenPreview() {
     OpenInStremioTheme {
-        HomeScreen(uiState = HomeUiState.Ready(StatusVariant.ACTIVE), onNavigate = {})
+        HomeScreen(
+            uiState =
+                HomeUiState.Ready(
+                    StatusVariant.ACTIVE,
+                    PlayerChoice.BOTH,
+                    stremioInstalled = true,
+                    fireguyInstalled = false,
+                ),
+            onNavigate = {},
+        )
     }
 }

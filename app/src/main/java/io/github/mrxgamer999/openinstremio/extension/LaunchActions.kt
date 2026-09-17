@@ -6,6 +6,7 @@ import com.battlelancer.seriesguide.api.Action
 import io.github.mrxgamer999.openinstremio.data.AndroidPackageChecker
 import io.github.mrxgamer999.openinstremio.forwarder.StremioLaunchActivity
 import io.github.mrxgamer999.openinstremio.forwarder.LaunchRequest
+import io.github.mrxgamer999.openinstremio.forwarder.Target
 import io.github.mrxgamer999.openinstremio.forwarder.actionLabelRes
 import io.github.mrxgamer999.openinstremio.forwarder.installedTargets
 
@@ -15,24 +16,31 @@ import io.github.mrxgamer999.openinstremio.forwarder.installedTargets
  * lookup that may later upgrade it — the two must hand SeriesGuide an identical button.
  *
  * SeriesGuide shows one action per extension per title, so the label has to stand for wherever
- * the tap will actually land: the one installed player by name, or the neutral "Open in…" that
- * the forwarder answers with a chooser. It is read at publish time because the answer changes
- * when a player is installed or removed, and the button must not promise the wrong app.
+ * the tap will actually land: the one chosen and installed player by name, or the neutral
+ * "Open in…" that the forwarder answers with a chooser. It is worked out at publish time because
+ * the answer changes when a player is installed or removed, or the user changes their choice, and
+ * the button must not promise the wrong app. `chosen` is the user's choice as the receiver read it.
  */
 internal object LaunchActions {
 
-    fun openMovie(context: Context, identifier: Int, imdbId: String, title: String): Action =
-        open(context, identifier, LaunchRequest.TYPE_MOVIE, imdbId, title)
+    fun openMovie(
+        context: Context,
+        chosen: List<Target>,
+        identifier: Int,
+        imdbId: String,
+        title: String,
+    ): Action = open(context, chosen, identifier, LaunchRequest.TYPE_MOVIE, imdbId, title)
 
     fun openEpisode(
         context: Context,
+        chosen: List<Target>,
         identifier: Int,
         imdbId: String,
         title: String,
         season: Int,
         episode: Int,
     ): Action =
-        open(context, identifier, LaunchRequest.TYPE_SERIES, imdbId, title) {
+        open(context, chosen, identifier, LaunchRequest.TYPE_SERIES, imdbId, title) {
             putExtra(StremioLaunchActivity.EXTRA_SEASON, season)
             putExtra(StremioLaunchActivity.EXTRA_EPISODE, episode)
         }
@@ -44,12 +52,13 @@ internal object LaunchActions {
      */
     fun search(
         context: Context,
+        chosen: List<Target>,
         identifier: Int,
         title: String,
         season: Int? = null,
         episode: Int? = null,
     ): Action =
-        Action.Builder(label(context, open = false), identifier)
+        Action.Builder(label(context, chosen, open = false), identifier)
             .viewIntent(
                 forwarderIntent(context, LaunchRequest.TYPE_SEARCH, title).apply {
                     if (season != null && episode != null) {
@@ -62,13 +71,14 @@ internal object LaunchActions {
 
     private fun open(
         context: Context,
+        chosen: List<Target>,
         identifier: Int,
         type: String,
         imdbId: String,
         title: String,
         extras: Intent.() -> Unit = {},
     ): Action =
-        Action.Builder(label(context, open = true), identifier)
+        Action.Builder(label(context, chosen, open = true), identifier)
             .viewIntent(
                 forwarderIntent(context, type, title)
                     .putExtra(StremioLaunchActivity.EXTRA_IMDB_ID, imdbId)
@@ -76,8 +86,10 @@ internal object LaunchActions {
             )
             .build()
 
-    private fun label(context: Context, open: Boolean): String =
-        context.getString(actionLabelRes(AndroidPackageChecker(context).installedTargets(), open))
+    private fun label(context: Context, chosen: List<Target>, open: Boolean): String =
+        context.getString(
+            actionLabelRes(chosen, AndroidPackageChecker(context).installedTargets(), open)
+        )
 
     private fun forwarderIntent(context: Context, type: String, title: String): Intent =
         Intent(context, StremioLaunchActivity::class.java)

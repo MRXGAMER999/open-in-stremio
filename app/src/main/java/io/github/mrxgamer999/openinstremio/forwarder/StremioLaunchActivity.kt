@@ -9,17 +9,26 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.core.net.toUri
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import io.github.mrxgamer999.openinstremio.data.AndroidPackageChecker
+import io.github.mrxgamer999.openinstremio.data.AppGraph
+import io.github.mrxgamer999.openinstremio.data.PlayerChoice
 import io.github.mrxgamer999.openinstremio.theme.OpenInStremioTheme
 import io.github.mrxgamer999.openinstremio.util.ExternalIntents
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * Invisible trampoline that every published SeriesGuide action points at. On the fast path
- * (one player installed) it fires the deep link and finishes without drawing a single frame;
- * otherwise it draws over the caller - the chooser when both players can open the title, or the
- * "isn't installed" dialog when the chosen one is missing.
+ * (one chosen player installed) it fires the deep link and finishes without drawing a single
+ * frame; otherwise it draws over the caller - the chooser when both chosen players can open the
+ * title, or the "isn't installed" dialog when the chosen one is missing.
+ *
+ * The user's [PlayerChoice] is read here, at tap time, not baked into the published Intent, so a
+ * change in Settings applies to the very next tap even on a button SeriesGuide is still showing.
  *
  * Exported because SeriesGuide launches it from its own process, but it has no intent
  * filter, so it can only be addressed explicitly. Extras are parsed defensively.
@@ -46,7 +55,15 @@ class StremioLaunchActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         val request = intent.toLaunchRequest()
-        act(viewModel.decide(request), request)
+        lifecycleScope.launch {
+            // The window is translucent, so the wait draws nothing. A read that never answers
+            // falls back to both, which still reaches whatever is installed.
+            val choice =
+                withTimeoutOrNull(CHOICE_TIMEOUT_MS) {
+                    AppGraph.playerChoiceStore(applicationContext).choice.first()
+                } ?: PlayerChoice.BOTH
+            act(viewModel.decide(request, choice.targets), request)
+        }
     }
 
     private fun act(decision: LaunchDecision, request: LaunchRequest) {
@@ -125,6 +142,8 @@ class StremioLaunchActivity : ComponentActivity() {
         const val EXTRA_SEASON = "season"
         const val EXTRA_EPISODE = "episode"
         const val EXTRA_TITLE = "title"
+
+        private const val CHOICE_TIMEOUT_MS = 1_000L
 
         private fun Intent.toLaunchRequest() =
             LaunchRequest(

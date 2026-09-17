@@ -64,15 +64,18 @@ val Target.icon: ImageVector
 /**
  * The label for the one action SeriesGuide shows per title.
  *
- * With both players installed the tap has to ask, so the button cannot name either of them.
- * With one, it names that one. With none the label stays Stremio's: the tap then leads to the
- * install nudge, which is where it led before there was a second player to name.
+ * Only the [chosen] players count. When more than one of them is installed the tap has to ask,
+ * so the button cannot name either. With one installed, it names that one. With none installed
+ * it names the first chosen player, because the tap leads to that player's install nudge. For
+ * a user who chose both, that is still Stremio, as it was before there was a choice.
  */
 @StringRes
-internal fun actionLabelRes(installed: List<Target>, open: Boolean): Int =
-    if (installed.size > 1) {
+internal fun actionLabelRes(chosen: List<Target>, installed: List<Target>, open: Boolean): Int {
+    val candidates = chosen.filter { it in installed }
+    return if (candidates.size > 1) {
         if (open) R.string.action_open_in else R.string.action_search_in
     } else {
-        val target = installed.singleOrNull() ?: Target.STREMIO
+        val target = candidates.singleOrNull() ?: chosen.firstOrNull() ?: Target.STREMIO
         if (open) target.openLabelRes else target.searchLabelRes
     }
+}

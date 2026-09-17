@@ -51,21 +51,20 @@ class LaunchViewModel(
 ) : ViewModel() {
 
     /**
-     * The chooser only appears when it has something to choose between. With one target
-     * installed the tap goes straight there, and with none it lands on Stremio's install
-     * nudge - the behaviour from before Fireguy existed, for the people who only ever had
-     * Stremio in mind.
+     * Only the [chosen] players are considered, and the chooser only appears when more than one
+     * of them can open the request. With one, the tap goes straight there. With none, it lands on
+     * the first chosen player's install nudge. For a user who chose both, that is Stremio's, as it
+     * was before Fireguy existed.
      */
-    fun decide(request: LaunchRequest): LaunchDecision {
-        val offerable = packageChecker.installedTargets().filter { buildUri(request, it) != null }
+    fun decide(request: LaunchRequest, chosen: List<Target>): LaunchDecision {
+        val offerable =
+            chosen.filter { packageChecker.isInstalled(it.packageId) && buildUri(request, it) != null }
         return when {
             offerable.size > 1 ->
                 LaunchDecision.ShowChooser(offerable, request.type == LaunchRequest.TYPE_SEARCH)
             offerable.size == 1 -> choose(request, offerable.single())
-            // Nothing installed, or nothing this request can address anywhere: Stremio's
-            // install nudge is what a tap did before Fireguy existed, and `choose` still
-            // answers Finish when there is no link to show it for.
-            else -> choose(request, Target.STREMIO)
+            // `choose` still answers Finish when there is no link to show the nudge for.
+            else -> choose(request, chosen.firstOrNull() ?: Target.STREMIO)
         }
     }
 

@@ -22,9 +22,8 @@ import org.junit.Test
  * far shorter than a deferred job could meet, so a return to the old behaviour fails it.
  */
 /**
- * The titles asserted here are the ones SeriesGuide shows when Stremio is the only player on the
- * device - which is what a test device is. With Fireguy installed too they would read "Open in…"
- * and "Search in…", and the tap would open the chooser instead.
+ * The titles asserted here are the ones SeriesGuide shows when Stremio is the chosen player,
+ * which [ExtensionHarness.subscribe] pins, so they hold whatever players the device has.
  */
 class ExtensionPublishTest {
 
