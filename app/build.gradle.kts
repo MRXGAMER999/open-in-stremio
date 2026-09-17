@@ -21,8 +21,8 @@ android {
         applicationId = "io.github.mrxgamer999.openinstremio"
         minSdk = 23
         targetSdk = 36
-        versionCode = 5
-        versionName = "1.1.0"
+        versionCode = 6
+        versionName = "1.2.0"
 
         buildConfigField(
             "String",
