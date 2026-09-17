@@ -2,7 +2,7 @@
 
 An open-source Android extension for [SeriesGuide](https://seriesguide.battlelancer.com/) that adds an **"Open in Stremio"** button under every movie and TV episode. Tap it, and [Stremio](https://www.stremio.com/) opens directly on that exact title — no searching, no typing.
 
-It opens **Fireguy On Demand** the same way if you have it. SeriesGuide gives an extension one button per title, so with both apps installed the button reads "Open in…" and asks which one you meant; with only one of them, it names that one and goes straight there.
+It opens **Fireguy On Demand** the same way. You choose which apps the button uses: **Stremio**, **Fireguy**, or **Both**. SeriesGuide gives an extension one button per title, so with Both chosen and both apps installed the button reads "Open in…" and asks which one you meant. Otherwise it names the one app it will open and goes straight there.
 
 Works on Android phones and on Android TV (including the NVIDIA Shield).
 
@@ -20,7 +20,7 @@ Works on Android phones and on Android TV (including the NVIDIA Shield).
 
 1. Download the latest APK from the [Releases page](https://github.com/MRXGAMER999/open-in-stremio/releases).
 2. Open the downloaded file. If your phone asks, allow installing from this source.
-3. Open the **Open in Stremio** app once — a short setup guide walks you through the rest.
+3. Open the **Open in Stremio** app once. A short setup guide asks which apps you use (Stremio, Fireguy or both) and walks you through the rest.
 4. The important step: open **SeriesGuide → Settings → Extensions**, add **"Open in Stremio"**, and you're done. The button now appears under every movie and episode in SeriesGuide.
 
 > The button lives **inside SeriesGuide** — not in this app, and not in Stremio. This app is just a setup helper.
@@ -34,6 +34,15 @@ The extension works the same on TV, but there is **no app icon on the TV home sc
 - **adb over the network**: `adb connect <shield-ip>:5555` then `adb install open-in-stremio.apk`.
 
 You may need to enable installing unknown apps in the TV's settings. After installing, enable the extension inside SeriesGuide exactly like on the phone (SeriesGuide → Settings → Extensions). You can reach this app's own screen from the extension's settings entry there.
+
+## Choose your apps
+
+The setup guide asks once. After that, the choice is on the Home screen ("Opens titles in …" → **Change**) and under **Settings**, and you can change it any time:
+
+- **Stremio** or **Fireguy**: the button opens that app only. If it isn't installed, a tap shows how to get it.
+- **Both**: with both installed, a tap asks which one. With only one installed, it goes straight there.
+
+A change applies to the very next tap. SeriesGuide renames the button the next time it shows a title.
 
 ## How it works
 
