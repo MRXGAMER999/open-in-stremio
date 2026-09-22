@@ -12,6 +12,7 @@ data class LaunchRequest(
     val season: Int,
     val episode: Int,
     val title: String?,
+    val year: Int? = null,
 ) {
     companion object {
         const val TYPE_MOVIE = "movie"
@@ -109,14 +110,15 @@ class LaunchViewModel(
             // Fireguy matches on the name as well as the id, so a title is enough on its own.
             // Season and episode are read wherever they are present rather than only on a
             // TYPE_SERIES request: a title with no IMDb id is published as a search, and those
-            // numbers are exactly what lets Fireguy still answer with the episode itself.
+            // numbers are exactly what lets Fireguy still answer with the episode itself. The
+            // year is the same story for a work whose namesake from another year is also carried.
             Target.FIREGUY ->
                 when {
                     title == null -> null
                     request.season >= 0 && request.episode >= 0 ->
-                        FireguyLinks.title(title, imdbId, request.season, request.episode)
+                        FireguyLinks.title(title, imdbId, request.season, request.episode, request.year)
 
-                    else -> FireguyLinks.title(title, imdbId)
+                    else -> FireguyLinks.title(title, imdbId, year = request.year)
                 }
         }
     }

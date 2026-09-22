@@ -20,7 +20,8 @@ class LaunchViewModelTest {
         season: Int = -1,
         episode: Int = -1,
         title: String? = null,
-    ) = LaunchRequest(type, imdbId, season, episode, title)
+        year: Int? = null,
+    ) = LaunchRequest(type, imdbId, season, episode, title, year)
 
     @Test
     fun movie_withStremioInstalled_launchesDetailLink() {
@@ -157,6 +158,25 @@ class LaunchViewModelTest {
             LaunchDecision.Launch(
                 Target.FIREGUY,
                 "fireguy://title?name=The%20Godfather&imdb=tt0068646",
+            ),
+            decision,
+        )
+    }
+
+    @Test
+    fun fireguy_theYearRidesTheLinkFromTheIntent() {
+        val viewModel = LaunchViewModel(fireguyOnly, isTv = false)
+
+        val decision =
+            viewModel.decide(
+                request(type = "movie", imdbId = "tt1234567", title = "Resident Evil", year = 2026),
+                Target.entries,
+            )
+
+        assertEquals(
+            LaunchDecision.Launch(
+                Target.FIREGUY,
+                "fireguy://title?name=Resident%20Evil&imdb=tt1234567&year=2026",
             ),
             decision,
         )

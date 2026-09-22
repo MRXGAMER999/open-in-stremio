@@ -29,7 +29,8 @@ internal object LaunchActions {
         identifier: Int,
         imdbId: String,
         title: String,
-    ): Action = open(context, chosen, identifier, LaunchRequest.TYPE_MOVIE, imdbId, title)
+        year: Int? = null,
+    ): Action = open(context, chosen, identifier, LaunchRequest.TYPE_MOVIE, imdbId, title, year)
 
     fun openEpisode(
         context: Context,
@@ -39,8 +40,9 @@ internal object LaunchActions {
         title: String,
         season: Int,
         episode: Int,
+        year: Int? = null,
     ): Action =
-        open(context, chosen, identifier, LaunchRequest.TYPE_SERIES, imdbId, title) {
+        open(context, chosen, identifier, LaunchRequest.TYPE_SERIES, imdbId, title, year) {
             putExtra(StremioLaunchActivity.EXTRA_SEASON, season)
             putExtra(StremioLaunchActivity.EXTRA_EPISODE, episode)
         }
@@ -48,7 +50,8 @@ internal object LaunchActions {
     /**
      * The fallback for a title with no IMDb id. Season and episode are carried when they are
      * known: Stremio's search link has no episode form and ignores them, but Fireguy matches on
-     * the name, so with them it lands on the episode rather than on the show.
+     * the name, so with them it lands on the episode rather than on the show. The year is carried
+     * for Fireguy's sake for the same reason — it parts same-named works there too.
      */
     fun search(
         context: Context,
@@ -57,6 +60,7 @@ internal object LaunchActions {
         title: String,
         season: Int? = null,
         episode: Int? = null,
+        year: Int? = null,
     ): Action =
         Action.Builder(label(context, chosen, open = false), identifier)
             .viewIntent(
@@ -65,6 +69,7 @@ internal object LaunchActions {
                         putExtra(StremioLaunchActivity.EXTRA_SEASON, season)
                         putExtra(StremioLaunchActivity.EXTRA_EPISODE, episode)
                     }
+                    year?.let { putExtra(StremioLaunchActivity.EXTRA_YEAR, it) }
                 }
             )
             .build()
@@ -76,12 +81,16 @@ internal object LaunchActions {
         type: String,
         imdbId: String,
         title: String,
+        year: Int? = null,
         extras: Intent.() -> Unit = {},
     ): Action =
         Action.Builder(label(context, chosen, open = true), identifier)
             .viewIntent(
                 forwarderIntent(context, type, title)
                     .putExtra(StremioLaunchActivity.EXTRA_IMDB_ID, imdbId)
+                    .apply {
+                        year?.let { putExtra(StremioLaunchActivity.EXTRA_YEAR, it) }
+                    }
                     .apply(extras)
             )
             .build()

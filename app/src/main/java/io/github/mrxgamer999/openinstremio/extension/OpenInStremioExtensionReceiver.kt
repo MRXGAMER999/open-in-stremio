@@ -17,6 +17,9 @@ import io.github.mrxgamer999.openinstremio.data.PlayerChoice
 import io.github.mrxgamer999.openinstremio.forwarder.Target
 import io.github.mrxgamer999.openinstremio.forwarder.targets
 import kotlinx.coroutines.flow.first
+import java.util.Calendar
+import java.util.Date
+import java.util.TimeZone
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
@@ -133,6 +136,7 @@ class OpenInStremioExtensionReceiver : BroadcastReceiver() {
         val title = episode.showTitle?.takeUnless { it.isBlank() } ?: episode.title.orEmpty()
         val season = episode.season
         val number = episode.number
+        val year = firstReleaseYear(episode.showFirstReleaseDate)
         // Without a season/episode number a direct link is impossible, so neither the cache nor a
         // lookup buys anything.
         if (season == null || number == null) {
@@ -143,6 +147,7 @@ class OpenInStremioExtensionReceiver : BroadcastReceiver() {
                 identifier,
                 title,
                 OutgoingConstants.ACTION_TYPE_EPISODE,
+                year = year,
             )
             return null
         }
@@ -162,15 +167,16 @@ class OpenInStremioExtensionReceiver : BroadcastReceiver() {
                 OutgoingConstants.ACTION_TYPE_EPISODE,
                 season,
                 number,
+                year,
             )
             // A lookup needs something to look up; without an id the fallback is the final answer.
             return episode.showTmdbId?.takeIf { it > 0 }?.let {
-                Upgrade.Episode(identifier, title, it, season, number)
+                Upgrade.Episode(identifier, title, it, season, number, year)
             }
         }
 
         subscriptions.publish(
-            LaunchActions.openEpisode(context, chosen, identifier, imdbId, title, season, number),
+            LaunchActions.openEpisode(context, chosen, identifier, imdbId, title, season, number, year),
             OutgoingConstants.ACTION_TYPE_EPISODE,
         )
         return null
@@ -185,16 +191,25 @@ class OpenInStremioExtensionReceiver : BroadcastReceiver() {
         movie: Movie,
     ): Upgrade? {
         val title = movie.title.orEmpty()
+        val year = movie.releaseDate?.let(::releaseYear)
         val imdbId =
             movie.imdbId?.takeUnless { it.isBlank() }
                 ?: cached(context) { it.cachedMovie(movie.tmdbId) }
         if (imdbId == null) {
-            publishSearch(context, subscriptions, chosen, identifier, title, OutgoingConstants.ACTION_TYPE_MOVIE)
-            return movie.tmdbId?.takeIf { it > 0 }?.let { Upgrade.Movie(identifier, title, it) }
+            publishSearch(
+                context,
+                subscriptions,
+                chosen,
+                identifier,
+                title,
+                OutgoingConstants.ACTION_TYPE_MOVIE,
+                year = year,
+            )
+            return movie.tmdbId?.takeIf { it > 0 }?.let { Upgrade.Movie(identifier, title, it, year) }
         }
 
         subscriptions.publish(
-            LaunchActions.openMovie(context, chosen, identifier, imdbId, title),
+            LaunchActions.openMovie(context, chosen, identifier, imdbId, title, year),
             OutgoingConstants.ACTION_TYPE_MOVIE,
         )
         return null
@@ -209,8 +224,9 @@ class OpenInStremioExtensionReceiver : BroadcastReceiver() {
         actionType: Int,
         season: Int? = null,
         episode: Int? = null,
+        year: Int? = null,
     ) = subscriptions.publish(
-        LaunchActions.search(context, chosen, identifier, title, season, episode),
+        LaunchActions.search(context, chosen, identifier, title, season, episode, year),
         actionType,
     )
 
@@ -233,11 +249,12 @@ class OpenInStremioExtensionReceiver : BroadcastReceiver() {
                         request.title,
                         request.season,
                         request.number,
+                        request.year,
                     )
                 }
                 is Upgrade.Movie -> {
                     val imdbId = ImdbLookups.resolveMovie(context, request.tmdbId) ?: return
-                    LaunchActions.openMovie(context, chosen, request.identifier, imdbId, request.title)
+                    LaunchActions.openMovie(context, chosen, request.identifier, imdbId, request.title, request.year)
                 }
             }
         ExtensionSubscriptions(context).publish(action, request.actionType)
@@ -301,12 +318,14 @@ class OpenInStremioExtensionReceiver : BroadcastReceiver() {
 
     /**
      * Everything a detached lookup needs, read out of the Intent while the broadcast is still
-     * alive: once `finish()` has run, the bundle is no business of this receiver's.
+     * alive: once `finish()` has run, the bundle is no business of this receiver's. The year is
+     * read here for the same reason — the upgraded button must carry what the original one did.
      */
     private sealed interface Upgrade {
         val identifier: Int
         val title: String
         val tmdbId: Int
+        val year: Int?
         val actionType: Int
 
         data class Episode(
@@ -315,6 +334,7 @@ class OpenInStremioExtensionReceiver : BroadcastReceiver() {
             override val tmdbId: Int,
             val season: Int,
             val number: Int,
+            override val year: Int? = null,
         ) : Upgrade {
             override val actionType = OutgoingConstants.ACTION_TYPE_EPISODE
         }
@@ -323,13 +343,24 @@ class OpenInStremioExtensionReceiver : BroadcastReceiver() {
             override val identifier: Int,
             override val title: String,
             override val tmdbId: Int,
+            override val year: Int? = null,
         ) : Upgrade {
             override val actionType = OutgoingConstants.ACTION_TYPE_MOVIE
         }
     }
 
+    /** UTC on purpose: a date-only release read at a local midnight could otherwise shift a year at the year's edge. */
+    private fun releaseYear(date: Date): Int =
+        Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply { time = date }.get(Calendar.YEAR)
+
+    /** The show's first release is an ISO instant ("2022-07-14T04:00:00Z") or empty; the year leads. */
+    private fun firstReleaseYear(firstRelease: String?): Int? =
+        LEADING_YEAR.find(firstRelease.orEmpty())?.value?.toIntOrNull()
+
     private companion object {
         private const val TAG = "OpenInStremioExt"
+
+        private val LEADING_YEAR = Regex("^\\d{4}")
 
         private const val CACHE_TIMEOUT_MS = 2_000L
         private const val CHOICE_TIMEOUT_MS = 2_000L

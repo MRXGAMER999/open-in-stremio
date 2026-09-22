@@ -142,6 +142,7 @@ class StremioLaunchActivity : ComponentActivity() {
         const val EXTRA_SEASON = "season"
         const val EXTRA_EPISODE = "episode"
         const val EXTRA_TITLE = "title"
+        const val EXTRA_YEAR = "year"
 
         private const val CHOICE_TIMEOUT_MS = 1_000L
 
@@ -152,6 +153,7 @@ class StremioLaunchActivity : ComponentActivity() {
                 season = getIntExtra(EXTRA_SEASON, -1),
                 episode = getIntExtra(EXTRA_EPISODE, -1),
                 title = getStringExtra(EXTRA_TITLE),
+                year = getIntExtra(EXTRA_YEAR, 0).takeIf { it != 0 },
             )
     }
 }

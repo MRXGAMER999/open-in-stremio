@@ -32,6 +32,23 @@ class FireguyLinksTest {
     }
 
     @Test
+    fun title_carriesTheYearAfterTheImdbId() {
+        // Fireguy's name fallback cannot tell a 2026 film from its 2002 namesake without this.
+        assertEquals(
+            "fireguy://title?name=Resident%20Evil&imdb=tt1234567&year=2026",
+            FireguyLinks.title("Resident Evil", imdbId = "tt1234567", year = 2026),
+        )
+    }
+
+    @Test
+    fun title_carriesTheYearWithoutAnImdbId() {
+        assertEquals(
+            "fireguy://title?name=Resident%20Evil&year=2026&season=1&episode=1",
+            FireguyLinks.title("Resident Evil", season = 1, episode = 1, year = 2026),
+        )
+    }
+
+    @Test
     fun title_needsBothNumbers_orNeither() {
         // A season with no episode addresses nothing Fireguy can act on, so it is not sent.
         assertEquals("fireguy://title?name=Friends", FireguyLinks.title("Friends", season = 1))

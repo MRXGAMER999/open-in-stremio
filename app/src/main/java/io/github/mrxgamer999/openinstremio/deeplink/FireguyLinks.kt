@@ -17,14 +17,25 @@ import java.net.URLEncoder
 object FireguyLinks {
 
     /**
-     * `fireguy://title?name={name}[&imdb={imdbId}][&season={season}&episode={episode}]`
+     * `fireguy://title?name={name}[&imdb={imdbId}][&year={year}][&season={season}&episode={episode}]`
      *
      * Season and episode are only spelled out together: either one alone addresses nothing.
+     *
+     * The year rides along because the name is more than a pre-fill: it is also Fireguy's fallback
+     * match when the id misses, and the year is what keeps that match off a same-named work from
+     * another year (a 2026 film rather than its 2002 namesake).
      */
-    fun title(name: String, imdbId: String? = null, season: Int? = null, episode: Int? = null): String =
+    fun title(
+        name: String,
+        imdbId: String? = null,
+        season: Int? = null,
+        episode: Int? = null,
+        year: Int? = null,
+    ): String =
         buildString {
             append("fireguy://title?name=").append(encode(name))
             imdbId?.takeUnless { it.isBlank() }?.let { append("&imdb=").append(it) }
+            year?.let { append("&year=").append(it) }
             if (season != null && episode != null) append("&season=$season&episode=$episode")
         }
 
