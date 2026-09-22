@@ -60,7 +60,7 @@ A change applies to the very next tap. SeriesGuide renames the button the next t
 
 1. Open the project in Android Studio (or run `gradlew assembleDebug`).
 2. Optional: for the TMDb fallback lookups, copy `local.properties.example` over your `local.properties` values and set `TMDB_API_KEY` (free key from [TMDb settings](https://www.themoviedb.org/settings/api)). Building **without** a key works fine — titles that SeriesGuide has no IMDb id for then get the "Search in Stremio" button.
-3. Release builds are intentionally not minified; see `app/proguard-rules.pro` for why.
+3. Release builds are shrunk with R8 (code and resources); the one keep rule, and why it is there, is in `app/proguard-rules.pro`.
 
 ## Privacy
 

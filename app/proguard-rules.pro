@@ -1,5 +1,7 @@
-# Minification is intentionally disabled for this app (see README).
-# The SeriesGuide extension API serializes Actions across process boundaries and
-# the app is small enough that R8 gains are negligible. If minification is ever
-# enabled, add keep rules for com.battlelancer.seriesguide.api.** and re-test the
-# enable -> click flow in a release build on a real device.
+# Release builds are shrunk with R8. Retrofit, OkHttp, kotlinx.serialization, DataStore and the
+# AndroidX libraries ship their own consumer rules; the manifest keeps the receiver and activities.
+#
+# The SeriesGuide extension API ships no rules. It builds Actions as Bundles keyed by string
+# constants (no reflection), so shrinking it is safe in principle, but it is the contract with
+# another app and is a handful of classes: keep it whole rather than bet the button on R8.
+-keep class com.battlelancer.seriesguide.api.** { *; }
